@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Arxiv{% endblock %}
+{% block content %}
+<h4 class="mb-3">Arxiv</h4>
+<p class="text-muted">Arxivlangan o'quvchilar, guruhlar va bloklangan xodimlar shu yerda to'plangan.</p>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-person-badge"></i> Arxivlangan o'quvchilar</span>
+    <span class="badge bg-secondary">{{ archived_students|length }}</span>
+  </div>
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Ism</th><th>Telefon</th><th>Egasi</th><th class="text-end">Amallar</th></tr></thead>
+    <tbody>
+      {% for s in archived_students %}
+      <tr>
+        <td><a href="{% url 'students:detail' s.pk %}">{{ s.full_name }}</a></td>
+        <td>{{ s.phone }}</td>
+        <td>{{ s.brought_by_user_id.full_name }}</td>
+        <td class="text-end">
+          <form method="post" action="{% url 'core:archive_restore_student' s.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary">Tiklash</button>
+          </form>
+          <form method="post" action="{% url 'core:archive_delete_student' s.pk %}" class="d-inline"
+                onsubmit="return confirm('{{ s.full_name|escapejs }} butunlay o\'chirilsinmi? Bu amalni ortga qaytarib bo\'lmaydi.');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">Butunlay o'chirish</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted text-center">Arxivlangan o'quvchilar yo'q</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-people"></i> Arxivlangan guruhlar</span>
+    <span class="badge bg-secondary">{{ archived_groups|length }}</span>
+  </div>
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Nomi</th><th>Kategoriya</th><th>Boshlangan</th><th class="text-end">Amallar</th></tr></thead>
+    <tbody>
+      {% for g in archived_groups %}
+      <tr>
+        <td><a href="{% url 'groups:detail' g.pk %}">{{ g.name }}</a></td>
+        <td>{{ g.category }}</td>
+        <td>{{ g.start_date }}</td>
+        <td class="text-end">
+          <form method="post" action="{% url 'core:archive_restore_group' g.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary">Tiklash</button>
+          </form>
+          <form method="post" action="{% url 'core:archive_delete_group' g.pk %}" class="d-inline"
+                onsubmit="return confirm('{{ g.name|escapejs }} guruhi butunlay o\'chirilsinmi? Bu amalni ortga qaytarib bo\'lmaydi.');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">Butunlay o'chirish</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted text-center">Arxivlangan guruhlar yo'q</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-person-gear"></i> Bloklangan xodimlar</span>
+    <span class="badge bg-secondary">{{ blocked_staff|length }}</span>
+  </div>
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Ism</th><th>Telefon</th><th>Roli</th><th class="text-end">Amallar</th></tr></thead>
+    <tbody>
+      {% for u in blocked_staff %}
+      <tr>
+        <td><a href="{% url 'accounts:staff_detail' u.pk %}">{{ u.full_name }}</a></td>
+        <td>{{ u.phone }}</td>
+        <td>{{ u.get_role_display }}</td>
+        <td class="text-end">
+          <form method="post" action="{% url 'core:archive_restore_staff' u.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary">Tiklash</button>
+          </form>
+          <form method="post" action="{% url 'core:archive_delete_staff' u.pk %}" class="d-inline"
+                onsubmit="return confirm('{{ u.full_name|escapejs }} butunlay o\'chirilsinmi? Bu amalni ortga qaytarib bo\'lmaydi.');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">Butunlay o'chirish</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted text-center">Bloklangan xodimlar yo'q</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

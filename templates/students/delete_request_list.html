@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}O'chirish so'rovlari{% endblock %}
+{% block content %}
+<h4 class="mb-3">O'chirish so'rovlari</h4>
+<table class="table bg-white">
+  <thead><tr><th>Yozuv</th><th>So'ragan</th><th>Sabab</th><th>Holat</th><th></th></tr></thead>
+  <tbody>
+    {% for dr in delete_requests %}
+    <tr>
+      <td>{% if dr.student %}<a href="{% url 'students:detail' dr.student.pk %}">{{ dr.student.full_name }}</a>{% else %}#{{ dr.entity_id }}{% endif %}</td>
+      <td>{{ dr.requested_by.full_name }}</td>
+      <td>{{ dr.reason }}</td>
+      <td><span class="badge {{ dr.status|status_badge }}">{{ dr.status|status_label }}</span></td>
+      <td>
+        {% if dr.status == 'pending' %}
+        <form method="post" action="{% url 'students:delete_request_decide' dr.pk 'approve' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Tasdiqlash</button></form>
+        <form method="post" action="{% url 'students:delete_request_decide' dr.pk 'reject' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Rad etish</button></form>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-muted text-center">So'rovlar yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Chek {{ payment.receipt_no }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <h5 class="card-title">{% if payment.is_refund %}Qaytarish{% else %}To'lov{% endif %} — {{ payment.receipt_no }}</h5>
+          <span class="badge {{ payment.status|status_badge }}">{{ payment.get_status_display }}</span>
+        </div>
+        <p class="mb-1"><strong>O'quvchi:</strong> <a href="{% url 'students:detail' payment.student.pk %}">{{ payment.student.full_name }}</a></p>
+        <p class="mb-1"><strong>Guruh:</strong> {{ payment.enrollment.group.name }}</p>
+        <p class="mb-1"><strong>Summa:</strong> {{ payment.amount|money }}</p>
+        <p class="mb-1"><strong>Usul:</strong> {{ payment.get_method_display }}</p>
+        <p class="mb-1"><strong>Sana:</strong> {{ payment.paid_at|date:'d.m.Y H:i' }}</p>
+        <p class="mb-1"><strong>Qabul qildi:</strong> {{ payment.received_by_user_id.full_name }}</p>
+        {% if payment.note %}<p class="mb-1"><strong>Izoh:</strong> {{ payment.note }}</p>{% endif %}
+        {% if payment.status == 'cancelled' %}
+        <p class="mb-1 text-danger"><strong>Bekor qilish sababi:</strong> {{ payment.cancel_reason }} ({{ payment.cancelled_by.full_name }})</p>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3">
+          <a href="{% url 'payments:receipt' payment.pk %}" target="_blank" class="btn btn-sm btn-outline-primary">Chekni ko'rish (PDF)</a>
+          {% if user.is_admin and payment.status == 'confirmed' and not payment.is_refund %}
+          <a href="{% url 'payments:cancel' payment.pk %}" class="btn btn-sm btn-outline-danger">Bekor qilish</a>
+          <a href="{% url 'payments:refund' payment.pk %}" class="btn btn-sm btn-outline-warning">Qaytarish</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

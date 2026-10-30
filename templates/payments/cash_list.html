@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Kassa{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Kassa yopish</h4>
+  {% if not today_closed %}
+  <a href="{% url 'payments:cash_create' %}" class="btn btn-primary btn-sm">Bugungi kassani yopish ({{ today_expected|money }})</a>
+  {% else %}
+  <span class="badge bg-secondary">Bugun yopilgan</span>
+  {% endif %}
+</div>
+
+<table class="table bg-white">
+  <thead><tr><th>Sana</th><th>Hodim</th><th>Tizim hisobi</th><th>E'lon qilingan</th><th>Farq</th><th>Holat</th></tr></thead>
+  <tbody>
+    {% for c in closings %}
+    <tr>
+      <td><a href="{% url 'payments:cash_detail' c.pk %}">{{ c.date }}</a></td>
+      <td>{{ c.user.full_name }}</td>
+      <td>{{ c.expected_amount|money }}</td>
+      <td>{{ c.declared_amount|money }}</td>
+      <td class="{% if c.difference != 0 %}text-danger{% endif %}">{{ c.difference|money }}</td>
+      <td><span class="badge {{ c.status|status_badge }}">{{ c.status|status_label }}</span></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-muted text-center">Yozuvlar yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

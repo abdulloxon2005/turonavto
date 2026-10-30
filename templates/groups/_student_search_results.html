@@ -1,0 +1,14 @@
+<div class="list-group">
+  {% for s in results %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <span>{{ s.full_name }} ({{ s.phone }})</span>
+    <form method="post" action="{% url 'groups:student_add' group.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="student_id" value="{{ s.pk }}">
+      <button class="btn btn-sm btn-outline-primary">Qo'shish</button>
+    </form>
+  </div>
+  {% empty %}
+  <p class="text-muted small">Topilmadi</p>
+  {% endfor %}
+</div>

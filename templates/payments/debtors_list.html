@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Qarzdorlar{% endblock %}
+{% block content %}
+<h4 class="mb-3">Qarzdorlar</h4>
+<table class="table bg-white">
+  <thead><tr><th>O'quvchi</th><th>Guruh</th><th>Qarz</th><th>Holat</th><th>Keyingi muddat</th></tr></thead>
+  <tbody>
+    {% for s in debtors %}
+    <tr>
+      <td><a href="{% url 'students:detail' s.enrollment.student.pk %}">{{ s.enrollment.student.full_name }}</a></td>
+      <td><a href="{% url 'groups:detail' s.enrollment.group.pk %}">{{ s.enrollment.group.name }}</a></td>
+      <td>{{ s.debt|money }}</td>
+      <td><span class="badge {{ s.status|status_badge }}">{{ s.status|status_label }}</span></td>
+      <td>{{ s.next_due_date|default:'—' }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-muted text-center">Qarzdorlar yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

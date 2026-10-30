@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Qarzdorlar hisoboti{% endblock %}
+{% block content %}
+<h4 class="mb-3">Qarzdorlar hisoboti</h4>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto">
+    <label class="form-label small mb-0">Guruh</label>
+    <select name="group" class="form-select">
+      <option value="">Barchasi</option>
+      {% for g in groups %}<option value="{{ g.pk }}" {% if group_id == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Hodim</label>
+    <select name="owner" class="form-select">
+      <option value="">Barchasi</option>
+      {% for s in staff_options %}<option value="{{ s.pk }}" {% if owner_id == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><label class="form-label small mb-0">Kamida kechikish (kun)</label><input type="number" name="min_days" class="form-control" value="{{ min_days|default:'' }}"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto">
+    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
+    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
+  </div>
+</form>
+
+<table class="table bg-white">
+  <thead><tr><th>O'quvchi</th><th>Guruh</th><th>Qarz</th><th>Eng eski muddat</th><th>Kechikish</th><th>Egasi</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><a href="{% url 'students:detail' r.enrollment.student.pk %}">{{ r.enrollment.student.full_name }}</a></td>
+      <td>{{ r.enrollment.group.name }}</td>
+      <td>{{ r.debt|money }}</td>
+      <td>{{ r.oldest_due_date|default:'—' }}</td>
+      <td>{% if r.overdue_days > 0 %}{{ r.overdue_days }} kun{% else %}—{% endif %}</td>
+      <td>{{ r.enrollment.student.brought_by_user_id.full_name }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-muted text-center">Qarzdorlar yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

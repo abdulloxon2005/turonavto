@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Hisobotlar{% endblock %}
+{% block content %}
+<h4 class="mb-4">Hisobotlar</h4>
+<div class="row g-3">
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Tushum</h6>
+    <p class="text-muted small">Sana oralig'i, usul, hodim bo'yicha</p>
+    <a href="{% url 'reports:revenue' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Guruhlar bo'yicha</h6>
+    <p class="text-muted small">Narx, to'langan, qarz, to'lov foizi</p>
+    <a href="{% url 'reports:groups' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Hodimlar bo'yicha</h6>
+    <p class="text-muted small">Olib kelgan o'quvchilar, undirgan summa, qarz</p>
+    <a href="{% url 'reports:staff' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Qarzdorlar</h6>
+    <p class="text-muted small">Guruh, hodim, kechikish kunlari bo'yicha</p>
+    <a href="{% url 'reports:debtors' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Kutilayotgan tushum</h6>
+    <p class="text-muted small">Keyingi 30 kunda grafik bo'yicha</p>
+    <a href="{% url 'reports:upcoming' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+  <div class="col-md-4"><div class="card card-body">
+    <h6>Kassa</h6>
+    <p class="text-muted small">Hodim kesimida kutilgan va topshirilgan summa</p>
+    <a href="{% url 'reports:cash' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+  </div></div>
+</div>
+{% endblock %}

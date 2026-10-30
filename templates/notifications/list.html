@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Xabarnomalar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Xabarnomalar</h4>
+  <form method="post" action="{% url 'notifications:mark_all_read' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-outline-secondary">Barchasini o'qilgan deb belgilash</button>
+  </form>
+</div>
+
+<div class="list-group">
+  {% for n in notifications %}
+  <div class="list-group-item {% if not n.is_read %}list-group-item-light border-start border-primary border-3{% endif %}">
+    <div class="d-flex justify-content-between">
+      <strong>{{ n.title }}</strong>
+      <small class="text-muted">{{ n.created_at }}</small>
+    </div>
+    <p class="mb-1 small">{{ n.body }}</p>
+    {% if not n.is_read %}
+    <form method="post" action="{% url 'notifications:mark_read' n.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-link p-0">O'qildi deb belgilash</button>
+    </form>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p class="text-muted">Xabarnomalar yo'q</p>
+  {% endfor %}
+</div>
+{% endblock %}

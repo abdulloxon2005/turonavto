@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Hodimlar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Hodimlar</h4>
+  <a href="{% url 'accounts:staff_create' %}" class="btn btn-primary btn-sm">+ Yangi hodim</a>
+</div>
+
+<form method="get" class="mb-3">
+  <input type="text" name="q" class="form-control" style="max-width:300px" placeholder="Ism yoki telefon" value="{{ request.GET.q }}">
+</form>
+
+<table class="table table-hover bg-white">
+  <thead>
+    <tr><th>Ism</th><th>Telefon</th><th>Rol</th><th>Holat</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for staff in staff_list %}
+    <tr>
+      <td><a href="{% url 'accounts:staff_detail' staff.pk %}">{{ staff.full_name }}</a></td>
+      <td>{{ staff.phone }}</td>
+      <td>{{ staff.get_role_display }}</td>
+      <td>
+        {% if staff.is_active %}<span class="badge bg-success">Faol</span>
+        {% else %}<span class="badge bg-secondary">Bloklangan</span>{% endif %}
+      </td>
+      <td><a href="{% url 'accounts:staff_update' staff.pk %}" class="btn btn-sm btn-outline-secondary">Tahrirlash</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-muted text-center">Hodimlar topilmadi</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

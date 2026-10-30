@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Tushum hisoboti{% endblock %}
+{% block content %}
+<h4 class="mb-3">Tushum hisoboti</h4>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto"><label class="form-label small mb-0">Dan</label><input type="date" name="date_from" class="form-control" value="{{ date_from|date:'Y-m-d' }}"></div>
+  <div class="col-auto"><label class="form-label small mb-0">Gacha</label><input type="date" name="date_to" class="form-control" value="{{ date_to|date:'Y-m-d' }}"></div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Usul</label>
+    <select name="method" class="form-select">
+      <option value="">Barchasi</option>
+      {% for val, label in methods %}<option value="{{ val }}" {% if method == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Hodim</label>
+    <select name="received_by" class="form-select">
+      <option value="">Barchasi</option>
+      {% for s in staff_options %}<option value="{{ s.pk }}" {% if received_by == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto">
+    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
+    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
+  </div>
+</form>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="card card-body"><small class="text-muted">Jami tushum</small><strong class="fs-4">{{ data.total|money }}</strong></div></div>
+  <div class="col-md-8">
+    <div class="card card-body">
+      <small class="text-muted">Usul bo'yicha</small>
+      {% for label, amount in data.by_method.items %}<div>{{ label }}: <strong>{{ amount|money }}</strong></div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<table class="table bg-white">
+  <thead><tr><th>Sana</th><th>O'quvchi</th><th>Summa</th><th>Usul</th><th>Qabul qildi</th></tr></thead>
+  <tbody>
+    {% for p in data.payments %}
+    <tr>
+      <td>{{ p.paid_at|date:'d.m.Y H:i' }}</td>
+      <td><a href="{% url 'students:detail' p.student.pk %}">{{ p.student.full_name }}</a></td>
+      <td>{{ p.amount|money }}</td>
+      <td>{{ p.get_method_display }}</td>
+      <td>{{ p.received_by_user_id.full_name }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-muted text-center">Ma'lumot yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

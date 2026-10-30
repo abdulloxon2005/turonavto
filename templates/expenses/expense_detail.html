@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Xarajat{% endblock %}
+{% block content %}
+<h4 class="mb-3">Xarajat tafsilotlari</h4>
+<div class="card" style="max-width: 480px;">
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-5">Sana</dt><dd class="col-7">{{ expense.expense_date }}</dd>
+      <dt class="col-5">Turi</dt><dd class="col-7">{{ expense.get_category_display }}</dd>
+      <dt class="col-5">Summa</dt><dd class="col-7">{{ expense.amount|money }}</dd>
+      <dt class="col-5">Qabul qiluvchi</dt><dd class="col-7">{{ expense.recipient_display }}</dd>
+      <dt class="col-5">Izoh</dt><dd class="col-7">{{ expense.description }}</dd>
+      <dt class="col-5">Kiritdi</dt><dd class="col-7">{{ expense.created_by.full_name }}</dd>
+      <dt class="col-5">Kiritilgan vaqt</dt><dd class="col-7">{{ expense.created_at|date:'d.m.Y H:i' }}</dd>
+    </dl>
+  </div>
+</div>
+<a href="{% url 'expenses:list' %}" class="btn btn-outline-secondary mt-3">Orqaga</a>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Zaxira nusxalar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Zaxira nusxalar</h4>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-primary btn-sm">Hozir zaxira olish</button>
+  </form>
+</div>
+
+<table class="table bg-white">
+  <thead><tr><th>Fayl</th><th></th></tr></thead>
+  <tbody>
+    {% for f in files %}
+    <tr>
+      <td>{{ f.name }}</td>
+      <td><a href="{% url 'core:backup_download' f.name %}" class="btn btn-sm btn-outline-primary">Yuklab olish</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2" class="text-muted text-center">Zaxira nusxalar yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

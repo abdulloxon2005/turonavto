@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Xarajatlar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Xarajatlar</h4>
+  <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm">+ Xarajat qo'shish</a>
+</div>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto">
+    <label class="form-label small mb-0">Turi</label>
+    {{ filter_form.category }}
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Xodim</label>
+    {{ filter_form.paid_to_user }}
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Sanadan</label>
+    {{ filter_form.date_from }}
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Sanagacha</label>
+    {{ filter_form.date_to }}
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+</form>
+
+<div class="card card-body mb-3">
+  <small class="text-muted">Jami xarajat</small>
+  <strong class="fs-4 text-danger">{{ total|money }}</strong>
+</div>
+
+<table class="table bg-white">
+  <thead><tr><th>Sana</th><th>Turi</th><th>Qabul qiluvchi</th><th>Izoh</th><th>Summa</th><th>Kiritdi</th></tr></thead>
+  <tbody>
+    {% for e in expenses %}
+    <tr>
+      <td><a href="{% url 'expenses:detail' e.pk %}">{{ e.expense_date }}</a></td>
+      <td>{{ e.get_category_display }}</td>
+      <td>{{ e.recipient_display }}</td>
+      <td>{{ e.description }}</td>
+      <td>{{ e.amount|money }}</td>
+      <td>{{ e.created_by.full_name }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-muted text-center">Xarajat yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Dars qo'shish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">Amaliyot darsi qo'shish</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">O'quvchi</label>
+            {{ form.student }}
+            {% for e in form.student.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Sana</label>
+            {{ form.lesson_date }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Vaqt</label>
+            {{ form.start_time }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Soat</label>
+            {{ form.hours }}
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

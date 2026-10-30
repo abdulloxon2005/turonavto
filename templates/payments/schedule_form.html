@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}To'lov grafigi{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-1">{{ enrollment.student.full_name }} — to'lov grafigi</h5>
+        <p class="text-muted small mb-3">Jami to'lov summasi: {{ enrollment.total_due }} so'm. Qismlar yig'indisi shunga teng bo'lishi kerak.</p>
+        {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+        <form method="post">
+          {% csrf_token %}
+          {{ formset.management_form }}
+          <table class="table">
+            <thead><tr><th>Summa</th><th>Muddat</th>{% if formset.can_delete %}<th>O'chirish</th>{% endif %}</tr></thead>
+            <tbody>
+              {% for form in formset %}
+              <tr>
+                <td>{{ form.amount }}{% for e in form.amount.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                <td>{{ form.due_date }}{% for e in form.due_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td>
+                <td>{{ form.DELETE }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

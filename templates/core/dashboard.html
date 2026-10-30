@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Bosh sahifa{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Xush kelibsiz, {{ user.full_name }}</h4>
+
+{% if role == 'admin' and admin_stats %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Faol o'quvchilar</small><strong class="fs-5">{{ admin_stats.students_count }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">O'qituvchilar</small><strong class="fs-5">{{ admin_stats.teachers_count }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Instruktorlar</small><strong class="fs-5">{{ admin_stats.instructors_count }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Ochiq guruhlar</small><strong class="fs-5">{{ admin_stats.open_groups_count }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi tushum</small><strong class="fs-5 text-success">{{ admin_stats.month_revenue|money }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi xarajat</small><strong class="fs-5 text-danger">{{ admin_stats.month_expenses|money }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi foyda</small><strong class="fs-5 {% if admin_stats.month_profit < 0 %}text-danger{% else %}text-success{% endif %}">{{ admin_stats.month_profit|money }}</strong></div></div>
+  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Jami qarzdorlik</small><strong class="fs-5 text-danger">{{ admin_stats.total_debt|money }}</strong></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Tushum va xarajat (oxirgi 6 oy)</small>
+      <canvas id="revenueExpenseChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">To'langan / Qarzdorlik</small>
+      <canvas id="debtChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Eng ko'p undirgan xodimlar (jami)</small>
+      <canvas id="staffChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Bu oy xarajatlar turi bo'yicha</small>
+      <canvas id="expenseCategoryChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if role == 'teacher' and stats %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Olib kelgan o'quvchilar</small><strong class="fs-5">{{ stats.students_count }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Jami undirgan</small><strong class="fs-5">{{ stats.total_collected|money }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi tushum</small><strong class="fs-5">{{ stats.month_revenue|money }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Qolgan qarz</small><strong class="fs-5 text-danger">{{ stats.total_debt|money }}</strong></div></div>
+</div>
+{% endif %}
+
+{% if role == 'instructor' and stats %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bugun undirgan</small><strong class="fs-5">{{ stats.collected_today|money }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oyda undirgan</small><strong class="fs-5">{{ stats.collected_month|money }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Qarzdor o'quvchilar</small><strong class="fs-5 text-danger">{{ stats.debtors_count }}</strong></div></div>
+  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oy o'tkazilgan soat</small><strong class="fs-5">{{ stats.month_hours }}</strong></div></div>
+</div>
+{% endif %}
+
+<div class="row g-3">
+  {% if role == 'admin' %}
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Hodimlar</h6>
+        <p class="text-muted small">O'qituvchi va instruktorlarni boshqarish</p>
+        <a href="{% url 'accounts:staff_list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Hisobotlar</h6>
+        <p class="text-muted small">Tushum, guruh, hodim va qarzdorlar hisobotlari</p>
+        <a href="{% url 'reports:index' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Xarajatlar</h6>
+        <p class="text-muted small">Ish haqi va boshqa xarajatlarni yozish</p>
+        <a href="{% url 'expenses:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Qarzdorlar</h6>
+        <p class="text-muted small">Qarzdor o'quvchilar ro'yxati</p>
+        <a href="{% url 'payments:debtors' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Kassa</h6>
+        <p class="text-muted small">Kunlik kassani yopish</p>
+        <a href="{% url 'payments:cash_list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+
+  {% if role == 'instructor' %}
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Amaliyot darslari</h6>
+        <p class="text-muted small">Dars jadvali va qatnashish</p>
+        <a href="{% url 'lessons:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Xabarnomalar</h6>
+        <p class="text-muted small">Tizim ichidagi bildirishnomalar</p>
+        <a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if role == 'admin' and admin_stats %}
+{{ chart_data|json_script:"dashboard-chart-data" }}
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById('dashboard-chart-data').textContent);
+  const palette = {
+    revenue: '#2563eb',
+    expense: '#ef4444',
+    paid: '#22c55e',
+    debt: '#f97316',
+    bars: ['#2563eb', '#22c55e', '#f97316', '#a855f7', '#0ea5e9'],
+  };
+
+  new Chart(document.getElementById('revenueExpenseChart'), {
+    type: 'bar',
+    data: {
+      labels: data.monthLabels,
+      datasets: [
+        { label: "Tushum", data: data.revenueValues, backgroundColor: palette.revenue, borderRadius: 4 },
+        { label: "Xarajat", data: data.expenseValues, backgroundColor: palette.expense, borderRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+
+  new Chart(document.getElementById('debtChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ["To'langan", 'Qarzdorlik'],
+      datasets: [{ data: [data.debtPaid, data.debtRemaining], backgroundColor: [palette.paid, palette.debt] }],
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+  });
+
+  new Chart(document.getElementById('staffChart'), {
+    type: 'bar',
+    data: {
+      labels: data.staffLabels,
+      datasets: [{ label: 'Undirgan summa', data: data.staffValues, backgroundColor: palette.bars, borderRadius: 4 }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+    },
+  });
+
+  if (data.expenseCategoryLabels.length) {
+    new Chart(document.getElementById('expenseCategoryChart'), {
+      type: 'pie',
+      data: {
+        labels: data.expenseCategoryLabels,
+        datasets: [{ data: data.expenseCategoryValues, backgroundColor: palette.bars }],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+    });
+  } else {
+    document.getElementById('expenseCategoryChart').replaceWith(
+      Object.assign(document.createElement('p'), { className: 'text-muted small mb-0', textContent: "Bu oy xarajat kiritilmagan" })
+    );
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

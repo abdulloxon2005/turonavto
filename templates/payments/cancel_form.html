@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}To'lovni bekor qilish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">{{ payment.receipt_no }} — bekor qilish</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Sabab</label>
+            {{ form.reason }}
+            {% for e in form.reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <button type="submit" class="btn btn-danger w-100">Bekor qilish</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

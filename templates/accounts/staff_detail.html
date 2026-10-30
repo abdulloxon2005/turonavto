@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ staff.full_name }}{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ staff.full_name }}</h5>
+        <p class="mb-1"><strong>Telefon:</strong> {{ staff.phone }}</p>
+        <p class="mb-1"><strong>Rol:</strong> {{ staff.get_role_display }}</p>
+        <p class="mb-1">
+          <strong>Holat:</strong>
+          {% if staff.is_active %}<span class="badge bg-success">Faol</span>{% else %}<span class="badge bg-secondary">Bloklangan</span>{% endif %}
+        </p>
+        <p class="mb-3"><strong>Oxirgi kirish:</strong> {{ staff.last_login_at|default:'—' }}</p>
+
+        <div class="d-flex gap-2">
+          <a href="{% url 'accounts:staff_update' staff.pk %}" class="btn btn-sm btn-outline-secondary">Tahrirlash</a>
+          <form method="post" action="{% url 'accounts:staff_toggle_active' staff.pk %}">
+            {% csrf_token %}
+            {% if staff.is_active %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Bloklash</button>
+            {% else %}
+              <button type="submit" class="btn btn-sm btn-outline-success">Faollashtirish</button>
+            {% endif %}
+          </form>
+          <form method="post" action="{% url 'accounts:staff_reset_password' staff.pk %}" onsubmit="return confirm('Yangi vaqtinchalik parol beriladi, davom etasizmi?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-warning">Parolni tiklash</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}O'quvchi{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">{% if student %}O'quvchini tahrirlash{% else %}Yangi o'quvchi{% endif %}</h5>
+
+        {% if duplicate_warning %}
+        <div class="alert alert-warning">Bu raqam bilan o'quvchi mavjud. Davom etish uchun "Saqlash"ni yana bosing.</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.confirm_duplicate }}
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">To'liq ism</label>
+              {{ form.full_name }}
+              {% for e in form.full_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tug'ilgan sana</label>
+              {{ form.birth_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefon</label>
+              {{ form.phone }}
+              {% for e in form.phone.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Qo'shimcha telefon</label>
+              {{ form.phone2 }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Pasport raqami</label>
+              {{ form.passport_no }}
+              {% for e in form.passport_no.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Rasm</label>
+              {{ form.photo }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Manzil</label>
+              {{ form.address }}
+            </div>
+            {% if form.group %}
+            <div class="col-12">
+              <label class="form-label">Guruh</label>
+              {{ form.group }}
+              {% for e in form.group.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            {% endif %}
+            <div class="col-12">
+              <label class="form-label">Izoh</label>
+              {{ form.note }}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mt-3">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

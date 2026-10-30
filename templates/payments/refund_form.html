@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Qaytarish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">{{ payment.receipt_no }} — pulni qaytarish</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Qaytariladigan summa</label>
+            {{ form.amount }}
+            {% for e in form.amount.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Izoh</label>
+            {{ form.note }}
+          </div>
+          <button type="submit" class="btn btn-warning w-100">Qaytarish</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

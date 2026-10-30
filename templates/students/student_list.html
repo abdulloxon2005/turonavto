@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}O'quvchilar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>O'quvchilar</h4>
+  <a href="{% url 'students:create' %}" class="btn btn-primary btn-sm">+ Yangi o'quvchi</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto"><input type="text" name="q" class="form-control" placeholder="Ism yoki telefon" value="{{ request.GET.q }}"></div>
+  {% if user.is_admin %}
+  <div class="col-auto">
+    <select name="group" class="form-select">
+      <option value="">Barcha guruhlar</option>
+      {% for g in group_options %}<option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="owner" class="form-select">
+      <option value="">Barcha egalari</option>
+      {% for o in owner_options %}<option value="{{ o.pk }}" {% if request.GET.owner == o.pk|stringformat:'s' %}selected{% endif %}>{{ o.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="col-auto">
+    <select name="status" class="form-select">
+      <option value="active" {% if request.GET.status == 'active' or not request.GET.status %}selected{% endif %}>Faol</option>
+      <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Arxivlangan</option>
+      <option value="">Barchasi</option>
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+</form>
+
+<table class="table table-hover bg-white">
+  <thead><tr><th>Ism</th><th>Telefon</th><th>Egasi</th><th>Holat</th></tr></thead>
+  <tbody>
+    {% for s in students %}
+    <tr>
+      <td><a href="{% url 'students:detail' s.pk %}">{{ s.full_name }}</a></td>
+      <td>{{ s.phone }}</td>
+      <td>{{ s.brought_by_user_id.full_name }}</td>
+      <td><span class="badge {{ s.status|status_badge }}">{{ s.status|status_label }}</span></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-muted text-center">O'quvchilar topilmadi</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Hodim{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">{% if form.instance.pk %}Hodimni tahrirlash{% else %}Yangi hodim{% endif %}</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">To'liq ism</label>
+            <input type="text" name="full_name" class="form-control" value="{{ form.full_name.value|default:'' }}" required>
+            {% for err in form.full_name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Telefon raqami</label>
+            <input type="text" name="phone" class="form-control" value="{{ form.phone.value|default:'' }}" placeholder="+998901234567" required>
+            {% for err in form.phone.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <select name="role" class="form-select">
+              <option value="teacher" {% if form.role.value == 'teacher' %}selected{% endif %}>O'qituvchi</option>
+              <option value="instructor" {% if form.role.value == 'instructor' %}selected{% endif %}>Instruktor</option>
+            </select>
+            {% for err in form.role.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          {% if form.instance.pk %}
+          <div class="form-check mb-3">
+            <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {% if form.is_active.value %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">Faol</label>
+          </div>
+          {% endif %}
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

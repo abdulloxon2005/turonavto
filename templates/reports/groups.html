@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Guruhlar hisoboti{% endblock %}
+{% block content %}
+<h4 class="mb-3">Guruhlar bo'yicha hisobot</h4>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto">
+    <label class="form-label small mb-0">Guruh</label>
+    <select name="group" class="form-select">
+      <option value="">Barchasi</option>
+      {% for g in groups %}<option value="{{ g.pk }}" {% if group_id == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-0">Holat</label>
+    <select name="status" class="form-select">
+      <option value="">Barchasi</option>
+      <option value="open" {% if status == 'open' %}selected{% endif %}>Ochiq</option>
+      <option value="closed" {% if status == 'closed' %}selected{% endif %}>Yopiq</option>
+      <option value="archived" {% if status == 'archived' %}selected{% endif %}>Arxivlangan</option>
+    </select>
+  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto">
+    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
+    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
+  </div>
+</form>
+
+<table class="table bg-white">
+  <thead><tr><th>Guruh</th><th>Narx</th><th>Jami</th><th>To'langan</th><th>Qarz</th><th>Foiz</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><a href="{% url 'groups:detail' r.group.pk %}">{{ r.group.name }}</a></td>
+      <td>{{ r.price|money }}</td>
+      <td>{{ r.total_due|money }}</td>
+      <td>{{ r.total_paid|money }}</td>
+      <td>{{ r.total_debt|money }}</td>
+      <td>{{ r.percent }}%</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="text-muted text-center">Ma'lumot yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

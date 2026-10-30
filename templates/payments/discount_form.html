@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Chegirma{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">{{ enrollment.student.full_name }} — chegirma</h5>
+        <p class="text-muted small">Kurs narxi: {{ enrollment.price }} so'm</p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Chegirma summasi</label>
+            {{ form.discount }}
+            {% for e in form.discount.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Sabab</label>
+            {{ form.discount_reason }}
+            {% for e in form.discount_reason.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

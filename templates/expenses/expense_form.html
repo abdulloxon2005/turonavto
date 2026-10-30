@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Xarajat qo'shish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">Xarajat qo'shish</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Turi</label>
+            {{ form.category }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Summa (so'm)</label>
+            {{ form.amount }}
+            {% for e in form.amount.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Sana</label>
+            {{ form.expense_date }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Izoh</label>
+            {{ form.description }}
+            {% for e in form.description.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Xodim (agar unga to'langan bo'lsa)</label>
+            {{ form.paid_to_user }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Qabul qiluvchi ismi (xodim tanlanmasa)</label>
+            {{ form.paid_to_name }}
+            {% for e in form.non_field_errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

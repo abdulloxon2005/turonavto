@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Sozlamalar{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-3">Tizim sozlamalari</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Markaz nomi</label>
+            {{ form.center_name }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">To'lov usullari</label>
+            {{ form.payment_methods }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Muddat o'tishidan necha kun oldin eslatma yuborilsin</label>
+            {{ form.reminder_days_before }}
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Saqlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

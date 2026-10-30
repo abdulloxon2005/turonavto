@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Kutilayotgan tushum{% endblock %}
+{% block content %}
+<h4 class="mb-3">Kutilayotgan tushum</h4>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto"><label class="form-label small mb-0">Necha kun</label><input type="number" name="days" class="form-control" value="{{ days }}"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto">
+    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
+    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
+  </div>
+</form>
+
+<div class="card card-body mb-3"><small class="text-muted">Jami kutilayotgan</small><strong class="fs-4">{{ data.total|money }}</strong></div>
+
+<table class="table bg-white">
+  <thead><tr><th>Muddat</th><th>O'quvchi</th><th>Guruh</th><th>Qolgan summa</th></tr></thead>
+  <tbody>
+    {% for i in data.items %}
+    <tr>
+      <td>{{ i.due_date }}</td>
+      <td><a href="{% url 'students:detail' i.enrollment.student.pk %}">{{ i.enrollment.student.full_name }}</a></td>
+      <td>{{ i.enrollment.group.name }}</td>
+      <td>{{ i.remaining|money }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-muted text-center">Ma'lumot yo'q</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
