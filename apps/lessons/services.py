@@ -25,7 +25,11 @@ def create_lesson(actor, *, student, lesson_date, start_time, hours):
 
     instructor = actor if actor.is_instructor() else student.instructor_links.first() and student.instructor_links.first().instructor
     if instructor is None:
-        raise ValidationError("Instruktor aniqlanmadi")
+        raise ValidationError(
+            "Bu o'quvchiga hali instruktor biriktirilmagan. Avval o'quvchi sahifasida "
+            "\"Instruktorlar\" bo'limidan instruktor biriktiring (guruhga biriktirilgan "
+            "instruktor buni avtomatik hal qilmaydi)."
+        )
 
     lesson = Lesson.objects.create(
         instructor=instructor, student=student, lesson_date=lesson_date,
