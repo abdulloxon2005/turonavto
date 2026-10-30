@@ -16,6 +16,11 @@ ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='localhost,1
 
 CENTER_NAME = config('CENTER_NAME', default='Avtomaktab')
 
+ALLOWED_HOSTS = ['turon.33x.uz', 'www.turon.33x.uz', '189.74.100.15']
+
+# Statik fayllarni yig'ish uchun:
+STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/turon_project/static'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
