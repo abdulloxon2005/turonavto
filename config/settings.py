@@ -12,11 +12,14 @@ config = Config(RepositoryEnv(str(env_file))) if env_file.exists() else decouple
 
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-me')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',') if h.strip()]
+ALLOWED_HOSTS = list(
+    dict.fromkeys(
+        [h.strip() for h in config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',') if h.strip()]
+        + ['127.0.0.1', 'localhost', 'turon.33x.uz', 'www.turon.33x.uz', '189.74.100.15']
+    )
+)
 
 CENTER_NAME = config('CENTER_NAME', default='Avtomaktab')
-
-ALLOWED_HOSTS = ['turon.33x.uz', 'www.turon.33x.uz', '189.74.100.15']
 
 # Statik fayllarni yig'ish uchun:
 STATIC_URL = '/static/'

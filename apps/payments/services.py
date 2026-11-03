@@ -11,8 +11,20 @@ from .models import CashClosing, Enrollment, Payment, PaymentSchedule
 
 
 def visible_enrollments_queryset(user):
+    from django.db.models import Q
+
     if user.is_admin():
         return Enrollment.objects.all()
+    if user.is_teacher():
+        return Enrollment.objects.filter(
+            Q(student__brought_by_user_id=user) | Q(group__group_teachers__user=user)
+        ).distinct()
+    if user.is_instructor():
+        return Enrollment.objects.filter(
+            Q(student__brought_by_user_id=user)
+            | Q(student__instructor_links__instructor=user)
+            | Q(group__group_instructors__user=user)
+        ).distinct()
     return Enrollment.objects.filter(student__brought_by_user_id=user)
 
 

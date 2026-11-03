@@ -16,6 +16,10 @@ STATUS_BADGES = {
     'pending': 'bg-warning text-dark',
     'approved': 'bg-success',
     'rejected': 'bg-danger',
+    'studying': 'bg-primary',
+    'ending_soon': 'bg-warning text-dark',
+    'finished': 'bg-success',
+    'no_group': 'bg-secondary',
 }
 
 STATUS_LABELS = {
@@ -32,6 +36,10 @@ STATUS_LABELS = {
     'pending': 'Kutilmoqda',
     'approved': 'Tasdiqlandi',
     'rejected': 'Rad etildi',
+    'studying': "O'qimoqda",
+    'ending_soon': 'Oz qoldi',
+    'finished': 'Tugatdi',
+    'no_group': 'Guruhsiz',
 }
 
 

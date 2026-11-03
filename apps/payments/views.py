@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
 
-from apps.core.mixins import AdminRequiredMixin, AnyRoleRequiredMixin
+from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin
 from apps.students.services import visible_students_queryset
 
 from .forms import (
@@ -276,7 +276,7 @@ class PaymentRefundView(AdminRequiredMixin, View):
         return redirect('payments:detail', pk=refund.pk)
 
 
-class DebtorsListView(AnyRoleRequiredMixin, View):
+class DebtorsListView(AdminOrTeacherRequiredMixin, View):
     template_name = 'payments/debtors_list.html'
 
     def get(self, request):
@@ -285,7 +285,7 @@ class DebtorsListView(AnyRoleRequiredMixin, View):
         return render(request, self.template_name, {'debtors': debtors})
 
 
-class CashClosingListView(AnyRoleRequiredMixin, View):
+class CashClosingListView(AdminRequiredMixin, View):
     template_name = 'payments/cash_list.html'
 
     def get(self, request):
@@ -298,7 +298,7 @@ class CashClosingListView(AnyRoleRequiredMixin, View):
         })
 
 
-class CashClosingCreateView(AnyRoleRequiredMixin, View):
+class CashClosingCreateView(AdminRequiredMixin, View):
     template_name = 'payments/cash_form.html'
 
     def get(self, request):
@@ -324,7 +324,7 @@ class CashClosingCreateView(AnyRoleRequiredMixin, View):
         return redirect('payments:cash_detail', pk=closing.pk)
 
 
-class CashClosingDetailView(AnyRoleRequiredMixin, View):
+class CashClosingDetailView(AdminRequiredMixin, View):
     template_name = 'payments/cash_detail.html'
 
     def get(self, request, pk):

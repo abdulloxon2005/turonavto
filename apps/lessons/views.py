@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import ListView
 
-from apps.core.mixins import AdminOrInstructorRequiredMixin
+from apps.core.mixins import AdminRequiredMixin
 from apps.students.services import visible_students_queryset
 
 from .forms import LessonForm
@@ -12,7 +12,7 @@ from .models import Lesson
 from .services import create_lesson, mark_attendance, visible_lessons_queryset
 
 
-class LessonListView(AdminOrInstructorRequiredMixin, ListView):
+class LessonListView(AdminRequiredMixin, ListView):
     model = Lesson
     template_name = 'lessons/lesson_list.html'
     context_object_name = 'lessons'
@@ -26,7 +26,7 @@ class LessonListView(AdminOrInstructorRequiredMixin, ListView):
         return qs
 
 
-class LessonCreateView(AdminOrInstructorRequiredMixin, View):
+class LessonCreateView(AdminRequiredMixin, View):
     template_name = 'lessons/lesson_form.html'
 
     def get(self, request):
@@ -50,7 +50,7 @@ class LessonCreateView(AdminOrInstructorRequiredMixin, View):
         return redirect('lessons:list')
 
 
-class LessonAttendanceView(AdminOrInstructorRequiredMixin, View):
+class LessonAttendanceView(AdminRequiredMixin, View):
     def post(self, request, pk, value):
         lesson = get_object_or_404(visible_lessons_queryset(request.user), pk=pk)
         attended = {'yes': True, 'no': False, 'unknown': None}.get(value)

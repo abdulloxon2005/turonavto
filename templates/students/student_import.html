@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Excel orqali o'quvchilarni qo'shish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-file-earmark-excel text-success me-1"></i>
+            Excel ro'yxatdan o'quvchilarni bir urinishda qo'shish
+          </h5>
+          <a href="{% url 'students:import_sample' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i>Namuna Excel (.xlsx) yuklab olish
+          </a>
+        </div>
+
+        <div class="alert alert-info small">
+          <strong>Qanday ishlaydi:</strong>
+          <ul class="mb-0 mt-1">
+            <li>Excel faylda (<code>.xlsx</code>) ustunlar quyidagi tartibda bo'lishi mumkin:
+              <strong>F.I.Sh (To'liq ism)</strong>, <strong>Telefon</strong>, <em>Qo'shimcha telefon</em>, <em>Pasport raqami</em>, <em>Tug'ilgan sana (YYYY-MM-DD)</em>, <em>Manzil</em>, <em>Izoh</em>.</li>
+            <li><strong>F.I.Sh</strong> va <strong>Telefon</strong> ustunlari majburiy, qolganlari ixtiyoriy.</li>
+            <li>Barcha yuklangan o'quvchilar tanlangan guruhga biriktiriladi va siz olib kelgan o'quvchi sifatida ro'yxatga olinadi.</li>
+          </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% if preset_group_id %}<input type="hidden" name="preset_group_id" value="{{ preset_group_id }}">{% endif %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.group.label }}</label>
+            {{ form.group }}
+            {% for e in form.group.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.excel_file.label }}</label>
+            {{ form.excel_file }}
+            {% for e in form.excel_file.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success flex-grow-1">
+              <i class="bi bi-upload me-1"></i>Bir urinishda yuklash va qo'shish
+            </button>
+            <a href="{% if preset_group_id %}{% url 'groups:detail' preset_group_id %}{% else %}{% url 'students:list' %}{% endif %}" class="btn btn-outline-secondary">
+              Bekor qilish
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

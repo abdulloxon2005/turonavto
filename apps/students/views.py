@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import ListView
@@ -9,11 +9,12 @@ from django.views.generic import ListView
 from apps.accounts.models import User
 from apps.core.mixins import AdminRequiredMixin, AnyRoleRequiredMixin, StaffRequiredMixin
 
-from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentForm
+from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentExcelImportForm, StudentForm
 from .models import DeleteRequest, Student
 from .services import (
     archive_student,
     assign_instructor,
+    bulk_import_students_from_excel,
     can_edit_student,
     change_owner,
     create_delete_request,
@@ -21,6 +22,8 @@ from .services import (
     decide_delete_request,
     delete_student,
     find_duplicates,
+    generate_student_import_sample_xlsx,
+    student_enriched_info,
     unarchive_student,
     unassign_instructor,
     update_student,
@@ -45,7 +48,11 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
         qs = visible_students_queryset(self.request.user).select_related('brought_by_user_id')
         q = self.request.GET.get('q', '').strip()
         if q:
-            qs = (qs.filter(full_name__icontains=q) | qs.filter(phone__icontains=q)).distinct()
+            qs = (
+                qs.filter(full_name__icontains=q)
+                | qs.filter(phone__icontains=q)
+                | qs.filter(passport_no__icontains=q)
+            ).distinct()
         group_id = self.request.GET.get('group')
         if group_id:
             qs = qs.filter(group_memberships__group_id=group_id, group_memberships__left_at__isnull=True)
@@ -55,29 +62,140 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
         status = self.request.GET.get('status', Student.Status.ACTIVE)
         if status:
             qs = qs.filter(status=status)
+
+        learning_filter = self.request.GET.get('learning_status', '').strip()
+        payment_filter = self.request.GET.get('payment_status', '').strip()
+        if learning_filter or payment_filter:
+            matching_ids = []
+            for s in qs.distinct():
+                info = student_enriched_info(s)
+                if learning_filter and info['learning_status'] != learning_filter:
+                    continue
+                if payment_filter:
+                    if payment_filter == 'debtor' and info['debt'] <= 0:
+                        continue
+                    elif payment_filter != 'debtor' and info['payment_status'] != payment_filter:
+                        continue
+                matching_ids.append(s.pk)
+            qs = qs.filter(pk__in=matching_ids)
+
         return qs.distinct()
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.user.is_admin():
-            from apps.groups.models import Group
+        from apps.groups.models import Group
+        from apps.payments.services import can_collect_payment
 
+        context = super().get_context_data(**kwargs)
+        for s in context['students']:
+            s.enriched = student_enriched_info(s)
+            s.can_collect = can_collect_payment(self.request.user, s)
+
+        all_visible = list(
+            visible_students_queryset(self.request.user)
+            .filter(status=Student.Status.ACTIVE)
+            .select_related('brought_by_user_id')
+        )
+        all_enriched = [student_enriched_info(s) for s in all_visible]
+        context['stats'] = {
+            'total': len(all_enriched),
+            'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
+            'ending_soon': sum(1 for item in all_enriched if item['learning_status'] == 'ending_soon'),
+            'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
+            'debtors_count': sum(1 for item in all_enriched if item['debt'] > 0),
+            'total_paid': sum(item['paid'] for item in all_enriched),
+            'total_debt': sum(item['debt'] for item in all_enriched),
+        }
+        context['learning_filter'] = self.request.GET.get('learning_status', '').strip()
+        context['payment_filter'] = self.request.GET.get('payment_status', '').strip()
+
+        if self.request.user.is_admin():
             context['group_options'] = Group.objects.all()
             context['owner_options'] = User.objects.exclude(role=User.Role.ADMIN)
+        elif self.request.user.is_teacher():
+            context['group_options'] = Group.objects.filter(group_teachers__user=self.request.user).distinct()
+        elif self.request.user.is_instructor():
+            context['group_options'] = Group.objects.filter(group_instructors__user=self.request.user).distinct()
         return context
+
+
+class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
+    """Foydalanuvchi o'zi olib kelgan o'quvchilarning alohida ro'yxati, o'qish va to'lov holatlari bilan."""
+
+    template_name = 'students/my_brought_students.html'
+
+    def get(self, request):
+        from apps.groups.models import Group
+
+        qs = Student.objects.filter(brought_by_user_id=request.user).select_related('brought_by_user_id')
+        q = request.GET.get('q', '').strip()
+        if q:
+            qs = (
+                qs.filter(full_name__icontains=q)
+                | qs.filter(phone__icontains=q)
+                | qs.filter(passport_no__icontains=q)
+            ).distinct()
+        group_id = request.GET.get('group', '').strip()
+        if group_id:
+            qs = qs.filter(group_memberships__group_id=group_id)
+
+        all_brought = list(Student.objects.filter(brought_by_user_id=request.user))
+        all_enriched = [student_enriched_info(s) for s in all_brought]
+
+        stats = {
+            'total': len(all_enriched),
+            'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
+            'ending_soon': sum(1 for item in all_enriched if item['learning_status'] == 'ending_soon'),
+            'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
+            'total_paid': sum(item['paid'] for item in all_enriched),
+            'total_debt': sum(item['debt'] for item in all_enriched),
+        }
+
+        items = [student_enriched_info(s) for s in qs.distinct()]
+
+        learning_filter = request.GET.get('learning_status', '').strip()
+        if learning_filter:
+            items = [i for i in items if i['learning_status'] == learning_filter]
+
+        payment_filter = request.GET.get('payment_status', '').strip()
+        if payment_filter:
+            if payment_filter == 'debtor':
+                items = [i for i in items if i['debt'] > 0]
+            else:
+                items = [i for i in items if i['payment_status'] == payment_filter]
+
+        if request.user.is_teacher():
+            group_options = Group.objects.filter(group_teachers__user=request.user).distinct()
+        elif request.user.is_instructor():
+            group_options = Group.objects.filter(group_instructors__user=request.user).distinct()
+        else:
+            group_options = Group.objects.all()
+
+        context = {
+            'items': items,
+            'stats': stats,
+            'learning_filter': learning_filter,
+            'payment_filter': payment_filter,
+            'group_options': group_options,
+        }
+        return render(request, self.template_name, context)
 
 
 class StudentCreateView(AnyRoleRequiredMixin, View):
     template_name = 'students/student_form.html'
 
     def get(self, request):
-        form = StudentForm(user=request.user, is_create=True)
-        return render(request, self.template_name, {'form': form})
+        initial = {}
+        group_id = request.GET.get('group')
+        if group_id:
+            initial['group'] = group_id
+        form = StudentForm(user=request.user, is_create=True, initial=initial)
+        return render(request, self.template_name, {'form': form, 'preset_group_id': group_id})
 
     def post(self, request):
         form = StudentForm(request.POST, request.FILES, user=request.user, is_create=True)
+        preset_group_id = request.POST.get('preset_group_id') or request.GET.get('group')
         if not form.is_valid():
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
 
         data = form.cleaned_data
         if not data.get('confirm_duplicate'):
@@ -93,7 +211,11 @@ class StudentCreateView(AnyRoleRequiredMixin, View):
                 form.fields['confirm_duplicate'].initial = True
                 form.data = form.data.copy()
                 form.data['confirm_duplicate'] = 'on'
-                return render(request, self.template_name, {'form': form, 'duplicate_warning': True})
+                return render(
+                    request,
+                    self.template_name,
+                    {'form': form, 'duplicate_warning': True, 'preset_group_id': preset_group_id},
+                )
 
         try:
             student = create_student(
@@ -110,29 +232,97 @@ class StudentCreateView(AnyRoleRequiredMixin, View):
             )
         except ValidationError as exc:
             messages.error(request, exc.message)
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
         except IntegrityError:
             form.add_error('passport_no', 'Bu pasport raqami bilan o\'quvchi allaqachon mavjud')
-            return render(request, self.template_name, {'form': form})
+            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
 
         messages.success(request, "O'quvchi qo'shildi")
+        if preset_group_id and data.get('group'):
+            return redirect('groups:detail', pk=data['group'].pk)
         return redirect('students:detail', pk=student.pk)
+
+
+class StudentExcelImportView(AnyRoleRequiredMixin, View):
+    template_name = 'students/student_import.html'
+
+    def get(self, request):
+        initial = {}
+        group_id = request.GET.get('group')
+        if group_id:
+            initial['group'] = group_id
+        form = StudentExcelImportForm(user=request.user, initial=initial)
+        return render(request, self.template_name, {'form': form, 'preset_group_id': group_id})
+
+    def post(self, request):
+        form = StudentExcelImportForm(request.POST, request.FILES, user=request.user)
+        preset_group_id = request.POST.get('preset_group_id') or request.GET.get('group')
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
+
+        group = form.cleaned_data['group']
+        excel_file = form.cleaned_data['excel_file']
+        try:
+            created_students, errors = bulk_import_students_from_excel(request.user, excel_file, group)
+        except ValidationError as exc:
+            messages.error(request, exc.message)
+            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
+
+        if created_students:
+            messages.success(
+                request,
+                f"Excel orqali {len(created_students)} ta o'quvchi '{group.name}' guruhiga muvaffaqiyatli qo'shildi!",
+            )
+        if errors:
+            for err in errors[:10]:
+                messages.warning(request, err)
+            if len(errors) > 10:
+                messages.warning(request, f"... va yana {len(errors) - 10} ta qatorda xatolik bo'ldi.")
+        if not created_students and not errors:
+            messages.info(request, "Excel faylda qo'shish uchun yangi qatorlar topilmadi.")
+
+        if created_students:
+            return redirect('groups:detail', pk=group.pk)
+        return render(
+            request,
+            self.template_name,
+            {'form': form, 'preset_group_id': preset_group_id, 'import_errors': errors},
+        )
+
+
+class StudentExcelSampleView(AnyRoleRequiredMixin, View):
+    def get(self, request):
+        content = generate_student_import_sample_xlsx()
+        response = HttpResponse(
+            content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename="oquvchilar_namuna.xlsx"'
+        return response
 
 
 class StudentDetailView(AnyRoleRequiredMixin, View):
     template_name = 'students/student_detail.html'
 
     def get(self, request, pk):
+        from apps.payments.models import Payment
         from apps.payments.services import can_collect_payment, student_debt_summary
         from apps.lessons.services import total_hours_for_student
 
         student = _get_visible_student_or_404(request.user, pk)
+        payments = (
+            Payment.objects.filter(student=student)
+            .select_related('enrollment__group', 'received_by_user_id')
+            .order_by('-paid_at')
+        )
         context = {
             'student': student,
-            'can_edit': can_edit_student(request.user, student),
+            'can_edit': can_edit_student(request.user, student) and not request.user.is_teacher(),
             'memberships': student.group_memberships.filter(left_at__isnull=True).select_related('group'),
             'instructor_links': student.instructor_links.select_related('instructor'),
             'debt_summary': student_debt_summary(student),
+            'enriched': student_enriched_info(student),
+            'payments': payments,
             'can_collect_payment': can_collect_payment(request.user, student),
             'total_hours': total_hours_for_student(student),
         }

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from apps.core.models import TimeStampedModel
 
@@ -42,6 +43,33 @@ class Group(TimeStampedModel):
     @property
     def is_full(self):
         return self.active_student_count >= self.max_students
+
+    @property
+    def capacity_percent(self):
+        if not self.max_students:
+            return 0
+        return min(int(self.active_student_count * 100 / self.max_students), 100)
+
+    @property
+    def learning_status(self):
+        if self.status in (self.Status.CLOSED, self.Status.ARCHIVED):
+            return 'finished'
+        today = timezone.localdate()
+        if self.end_date:
+            if self.end_date < today:
+                return 'finished'
+            if (self.end_date - today).days <= 14:
+                return 'ending_soon'
+        elif self.start_date and (today - self.start_date).days >= 60:
+            return 'ending_soon'
+        return 'studying'
+
+    @property
+    def days_remaining(self):
+        if not self.end_date:
+            return None
+        diff = (self.end_date - timezone.localdate()).days
+        return max(diff, 0)
 
 
 class GroupTeacher(models.Model):

@@ -121,6 +121,18 @@ def add_student_to_group(actor, group, student):
         raise ValidationError("O'quvchi allaqachon shu guruhda")
 
     membership = GroupStudent.objects.create(group=group, student=student)
+    from apps.payments.models import Enrollment
+
+    Enrollment.objects.get_or_create(
+        student=student,
+        group=group,
+        defaults={
+            'price': group.price,
+            'discount': 0,
+            'total_due': group.price,
+            'created_by': actor,
+        },
+    )
     log_action(actor, action='group.add_student', entity_type='Group', entity_id=group.pk,
                new_value={'student_id': student.pk})
     return membership

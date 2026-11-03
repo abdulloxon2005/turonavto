@@ -1,12 +1,13 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
 
+from apps.core.mixins import AdminOrTeacherRequiredMixin
+
 from .models import Notification
 
 
-class NotificationListView(LoginRequiredMixin, ListView):
+class NotificationListView(AdminOrTeacherRequiredMixin, ListView):
     model = Notification
     template_name = 'notifications/list.html'
     context_object_name = 'notifications'
@@ -16,7 +17,7 @@ class NotificationListView(LoginRequiredMixin, ListView):
         return Notification.objects.filter(user=self.request.user)
 
 
-class NotificationMarkReadView(LoginRequiredMixin, View):
+class NotificationMarkReadView(AdminOrTeacherRequiredMixin, View):
     def post(self, request, pk):
         notification = get_object_or_404(Notification, pk=pk, user=request.user)
         if not notification.is_read:
@@ -26,7 +27,7 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
         return redirect(next_url)
 
 
-class NotificationMarkAllReadView(LoginRequiredMixin, View):
+class NotificationMarkAllReadView(AdminOrTeacherRequiredMixin, View):
     def post(self, request):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return redirect('notifications:list')

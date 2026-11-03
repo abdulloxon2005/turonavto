@@ -121,7 +121,9 @@ class Command(BaseCommand):
                 )
                 assign_instructor(admin, student, primary_instructor)
 
-                enrollment = create_enrollment(admin, student=student, group=group, price=group.price)
+                enrollment = student.enrollments.filter(group=group).first() or create_enrollment(
+                    admin, student=student, group=group, price=group.price
+                )
                 paid_ratio = random.choice([0.2, 0.3, 0.4, 0.5, 0.6, 1.0])
                 paid_amount = round(group.price * paid_ratio / 50_000) * 50_000
                 if paid_amount > 0:

@@ -5,7 +5,14 @@
   <div class="col-md-7">
     <div class="card">
       <div class="card-body p-4">
-        <h5 class="card-title mb-3">{% if student %}O'quvchini tahrirlash{% else %}Yangi o'quvchi{% endif %}</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0">{% if student %}O'quvchini tahrirlash{% else %}Yangi o'quvchi qo'shish{% endif %}</h5>
+          {% if not student %}
+          <a href="{% url 'students:import_excel' %}{% if preset_group_id %}?group={{ preset_group_id }}{% endif %}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-excel me-1"></i>Excel orqali ko'plab qo'shish
+          </a>
+          {% endif %}
+        </div>
 
         {% if duplicate_warning %}
         <div class="alert alert-warning">Bu raqam bilan o'quvchi mavjud. Davom etish uchun "Saqlash"ni yana bosing.</div>
@@ -14,6 +21,7 @@
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           {{ form.confirm_duplicate }}
+          {% if preset_group_id %}<input type="hidden" name="preset_group_id" value="{{ preset_group_id }}">{% endif %}
           <div class="row g-3">
             <div class="col-md-8">
               <label class="form-label">To'liq ism</label>

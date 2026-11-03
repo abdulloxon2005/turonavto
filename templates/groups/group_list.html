@@ -1,17 +1,30 @@
 {% extends 'base.html' %}
 {% load core_extras %}
-{% block title %}Guruhlar{% endblock %}
+{% block title %}{% if not user.is_admin %}Guruhlarim{% else %}Guruhlar{% endif %}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4>Guruhlar</h4>
+  <div>
+    <h4 class="mb-0">{% if not user.is_admin %}Menga biriktirilgan guruhlar{% else %}Guruhlar{% endif %}</h4>
+    {% if not user.is_admin %}
+    <small class="text-muted">O'zingizga biriktirilgan guruhlar kartochkalari — ichiga kirib o'quvchilarni ko'rishingiz va yangi o'quvchi qo'shishingiz mumkin</small>
+    {% endif %}
+  </div>
   {% if user.is_admin %}
   <a href="{% url 'groups:create' %}" class="btn btn-primary btn-sm">+ Yangi guruh</a>
   {% endif %}
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-4">
   <div class="col-auto">
-    <input type="text" name="q" class="form-control" placeholder="Nomi" value="{{ request.GET.q }}">
+    <input type="text" name="q" class="form-control" placeholder="Guruh nomi..." value="{{ request.GET.q }}">
+  </div>
+  <div class="col-auto">
+    <select name="category" class="form-select">
+      <option value="">Barcha toifalar (A, B, BC...)</option>
+      {% for cat in categories %}
+      <option value="{{ cat }}" {% if request.GET.category|upper == cat %}selected{% endif %}>Toifa: {{ cat }}</option>
+      {% endfor %}
+    </select>
   </div>
   <div class="col-auto">
     <select name="status" class="form-select">
@@ -21,27 +34,74 @@
       <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Arxivlangan</option>
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto">
+    <button class="btn btn-outline-secondary">Filtr</button>
+    {% if request.GET.q or request.GET.category or request.GET.status %}
+    <a href="{% url 'groups:list' %}" class="btn btn-link text-secondary">Tozalash</a>
+    {% endif %}
+  </div>
 </form>
 
 <div class="row g-3">
   {% for group in groups %}
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <h6 class="card-title">{{ group.name }}</h6>
-          <span class="badge {{ group.status|status_badge }}">{{ group.status|status_label }}</span>
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100 border-0 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h5 class="card-title mb-1">
+              <a href="{% url 'groups:detail' group.pk %}" class="text-decoration-none text-dark">{{ group.name }}</a>
+            </h5>
+            <span class="badge bg-dark fs-6">Toifa: {{ group.category }}</span>
+          </div>
+          <div class="text-end">
+            <span class="badge {{ group.status|status_badge }}">{{ group.status|status_label }}</span>
+            <div class="mt-1">
+              <span class="badge {{ group.learning_status|status_badge }}">{{ group.learning_status|status_label }}</span>
+            </div>
+          </div>
         </div>
-        <p class="text-muted small mb-1">Toifa: {{ group.category }}</p>
-        <p class="text-muted small mb-1">A'zolar: {{ group.active_student_count }} / {{ group.max_students }}</p>
-        <p class="text-muted small mb-2">Narx: {{ group.price|money }}</p>
-        <a href="{% url 'groups:detail' group.pk %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+
+        <div class="my-2 p-2 bg-light rounded">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-muted"><i class="bi bi-people-fill me-1"></i>O'quvchilar soni:</span>
+            <strong>{{ group.active_student_count }} / {{ group.max_students }} ta</strong>
+          </div>
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar {% if group.is_full %}bg-danger{% else %}bg-primary{% endif %}"
+                 role="progressbar"
+                 style="width: {{ group.capacity_percent }}%;"></div>
+          </div>
+        </div>
+
+        <ul class="list-unstyled small text-muted mb-3 flex-grow-1">
+          <li class="mb-1"><i class="bi bi-cash me-1"></i><strong>Kurs narxi:</strong> {{ group.price|money }}</li>
+          <li class="mb-1"><i class="bi bi-calendar-event me-1"></i><strong>Muddat:</strong> {{ group.start_date }}{% if group.end_date %} — {{ group.end_date }}{% endif %}</li>
+          {% if group.schedule %}
+          <li class="mb-1"><i class="bi bi-clock me-1"></i><strong>Dars jadvali:</strong> {{ group.schedule }}</li>
+          {% endif %}
+        </ul>
+
+        <div class="d-flex gap-2 mt-auto">
+          <a href="{% url 'groups:detail' group.pk %}" class="btn btn-sm btn-primary flex-grow-1">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Ichiga kirish ({{ group.active_student_count }})
+          </a>
+          {% if group.status == 'open' and not group.is_full %}
+          <a href="{% url 'students:create' %}?group={{ group.pk }}" class="btn btn-sm btn-outline-success" title="Shu guruhga o'quvchi qo'shish">
+            <i class="bi bi-person-plus"></i>
+          </a>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
   {% empty %}
-  <p class="text-muted">Guruhlar topilmadi</p>
+  <div class="col-12">
+    <div class="card card-body text-center text-muted py-5">
+      <i class="bi bi-people fs-1 mb-2"></i>
+      <p class="mb-0">Sizga biriktirilgan guruhlar topilmadi</p>
+    </div>
+  </div>
   {% endfor %}
 </div>
 

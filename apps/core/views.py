@@ -118,6 +118,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         }
 
     def _teacher_stats(self, user):
+        from apps.groups.models import Group
         from apps.payments.services import debtors_queryset, visible_payments_queryset
         from apps.payments.models import Payment
         from apps.students.models import Student
@@ -125,39 +126,65 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         today = timezone.localdate()
         month_start = today.replace(day=1)
 
-        students_count = Student.objects.filter(brought_by_user_id=user).count()
+        group_students_count = Student.objects.filter(
+            group_memberships__group__group_teachers__user=user,
+            group_memberships__left_at__isnull=True,
+            status=Student.Status.ACTIVE,
+        ).distinct().count()
+        brought_students_count = Student.objects.filter(brought_by_user_id=user).count()
+        groups_count = Group.objects.filter(group_teachers__user=user).exclude(
+            status=Group.Status.ARCHIVED
+        ).distinct().count()
+
         payments = visible_payments_queryset(user).filter(status=Payment.Status.CONFIRMED)
         total_collected = payments.aggregate(s=Sum('amount'))['s'] or 0
         month_revenue = payments.filter(paid_at__date__gte=month_start).aggregate(s=Sum('amount'))['s'] or 0
         total_debt = sum(d['debt'] for d in debtors_queryset(user))
 
         return {
-            'students_count': students_count,
+            'students_count': group_students_count,
+            'brought_students_count': brought_students_count,
+            'groups_count': groups_count,
             'total_collected': total_collected,
             'month_revenue': month_revenue,
             'total_debt': total_debt,
         }
 
     def _instructor_stats(self, user):
+        from apps.groups.models import Group
         from apps.lessons.services import total_hours_for_instructor
-        from apps.payments.services import debtors_queryset
         from apps.payments.models import Payment
+        from apps.payments.services import debtors_queryset, visible_payments_queryset
+        from apps.students.models import Student
+        from apps.students.services import visible_students_queryset
 
         today = timezone.localdate()
         month_start = today.replace(day=1)
 
-        payments_today = Payment.objects.filter(
-            received_by_user_id=user, status=Payment.Status.CONFIRMED, paid_at__date=today,
-        ).aggregate(s=Sum('amount'))['s'] or 0
-        payments_month = Payment.objects.filter(
-            received_by_user_id=user, status=Payment.Status.CONFIRMED, paid_at__date__gte=month_start,
-        ).aggregate(s=Sum('amount'))['s'] or 0
-        debtors_count = len(debtors_queryset(user))
+        students_count = visible_students_queryset(user).filter(status=Student.Status.ACTIVE).count()
+        brought_students_count = Student.objects.filter(brought_by_user_id=user).count()
+        groups_count = Group.objects.filter(group_instructors__user=user).exclude(
+            status=Group.Status.ARCHIVED
+        ).distinct().count()
+
+        payments = visible_payments_queryset(user).filter(status=Payment.Status.CONFIRMED)
+        total_collected = payments.aggregate(s=Sum('amount'))['s'] or 0
+        month_revenue = payments.filter(paid_at__date__gte=month_start).aggregate(s=Sum('amount'))['s'] or 0
+        payments_today = payments.filter(paid_at__date=today).aggregate(s=Sum('amount'))['s'] or 0
+        debtors = debtors_queryset(user)
+        total_debt = sum(d['debt'] for d in debtors)
+        debtors_count = len(debtors)
         month_hours = total_hours_for_instructor(user, since=month_start)
 
         return {
+            'students_count': students_count,
+            'brought_students_count': brought_students_count,
+            'groups_count': groups_count,
+            'total_collected': total_collected,
+            'month_revenue': month_revenue,
+            'total_debt': total_debt,
             'collected_today': payments_today,
-            'collected_month': payments_month,
+            'collected_month': month_revenue,
             'debtors_count': debtors_count,
             'month_hours': month_hours,
         }

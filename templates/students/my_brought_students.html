@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+{% block title %}Olib kelgan o'quvchilarim{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h4 class="mb-0">Men olib kelgan o'quvchilar</h4>
+    <small class="text-muted">Siz olib kelgan barcha o'quvchilarning o'qish jarayoni (O'qimoqda / Oz qoldi / Tugatdi) va to'lov holatlari</small>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'students:import_excel' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-excel me-1"></i>Exceldan ko'plab qo'shish
+    </a>
+    <a href="{% url 'students:create' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-person-plus me-1"></i>+ Yangi o'quvchi qo'shish
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{% url 'students:my_brought' %}" class="text-decoration-none">
+      <div class="card card-body h-100 {% if not learning_filter %}border-primary border-2{% endif %}">
+        <small class="text-muted">Jami olib kelganlar</small>
+        <strong class="fs-4 text-dark">{{ stats.total }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?learning_status=studying" class="text-decoration-none">
+      <div class="card card-body h-100 {% if learning_filter == 'studying' %}border-primary border-2{% endif %}">
+        <small class="text-muted">O'qimoqda</small>
+        <strong class="fs-4 text-primary">{{ stats.studying }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?learning_status=ending_soon" class="text-decoration-none">
+      <div class="card card-body h-100 {% if learning_filter == 'ending_soon' %}border-warning border-2{% endif %}">
+        <small class="text-muted">Oz qoldi</small>
+        <strong class="fs-4 text-warning">{{ stats.ending_soon }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?learning_status=finished" class="text-decoration-none">
+      <div class="card card-body h-100 {% if learning_filter == 'finished' %}border-success border-2{% endif %}">
+        <small class="text-muted">Tugatdi</small>
+        <strong class="fs-4 text-success">{{ stats.finished }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=paid" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'paid' %}border-success border-2{% endif %}">
+        <small class="text-muted">Jami to'lov qildirdi</small>
+        <strong class="fs-6 text-success mt-1">{{ stats.total_paid|money }}</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=debtor" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'debtor' %}border-danger border-2{% endif %}">
+        <small class="text-muted">Jami qolgan qarz</small>
+        <strong class="fs-6 text-danger mt-1">{{ stats.total_debt|money }}</strong>
+      </div>
+    </a>
+  </div>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-auto">
+    <input type="text" name="q" class="form-control" placeholder="Ism, telefon yoki pasport..." value="{{ request.GET.q }}">
+  </div>
+  <div class="col-auto">
+    <select name="learning_status" class="form-select">
+      <option value="">O'qish holati: Barchasi</option>
+      <option value="studying" {% if learning_filter == 'studying' %}selected{% endif %}>O'qimoqda</option>
+      <option value="ending_soon" {% if learning_filter == 'ending_soon' %}selected{% endif %}>Oz qoldi</option>
+      <option value="finished" {% if learning_filter == 'finished' %}selected{% endif %}>Tugatdi</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="payment_status" class="form-select">
+      <option value="">To'lov holati: Barchasi</option>
+      <option value="debtor" {% if payment_filter == 'debtor' %}selected{% endif %}>Qarzdorlar</option>
+      <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>To'langan</option>
+      <option value="partial" {% if payment_filter == 'partial' %}selected{% endif %}>Qisman</option>
+      <option value="unpaid" {% if payment_filter == 'unpaid' %}selected{% endif %}>To'lanmagan</option>
+      <option value="overdue" {% if payment_filter == 'overdue' %}selected{% endif %}>Muddati o'tgan</option>
+    </select>
+  </div>
+  {% if group_options %}
+  <div class="col-auto">
+    <select name="group" class="form-select">
+      <option value="">Barcha guruhlar</option>
+      {% for g in group_options %}
+      <option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }} ({{ g.category }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="col-auto">
+    <button class="btn btn-outline-secondary">Filtr</button>
+    {% if request.GET.q or learning_filter or payment_filter or request.GET.group %}
+    <a href="{% url 'students:my_brought' %}" class="btn btn-link text-secondary">Tozalash</a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>O'quvchi ma'lumotlari</th>
+        <th>Telefon</th>
+        <th>Guruh va Toifa</th>
+        <th>O'qish holati</th>
+        <th>Kurs narxi</th>
+        <th>To'langan</th>
+        <th>Qolgan qarz</th>
+        <th>To'lov holati</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="text-muted">{{ forloop.counter }}</td>
+        <td>
+          <a href="{% url 'students:detail' item.student.pk %}" class="fw-semibold text-decoration-none">
+            {{ item.student.full_name }}
+          </a>
+          <div class="small text-muted">
+            {% if item.student.passport_no %}Pasport: {{ item.student.passport_no }} · {% endif %}
+            {% if item.student.address %}{{ item.student.address }}{% endif %}
+          </div>
+        </td>
+        <td>
+          <div>{{ item.student.phone }}</div>
+          {% if item.student.phone2 %}<small class="text-muted">{{ item.student.phone2 }}</small>{% endif %}
+        </td>
+        <td>
+          {% if item.group %}
+          <a href="{% url 'groups:detail' item.group.pk %}" class="fw-semibold text-decoration-none">{{ item.group.name }}</a>
+          <span class="badge bg-dark ms-1">{{ item.group.category }}</span>
+          <div class="small text-muted">
+            {{ item.group.start_date }}{% if item.group.end_date %} — {{ item.group.end_date }}{% endif %}
+          </div>
+          {% else %}
+          <span class="text-muted">Guruhga biriktirilmagan</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge {{ item.learning_status|status_badge }}">
+            {{ item.learning_status|status_label }}
+          </span>
+          {% if item.learning_status == 'ending_soon' and item.days_remaining is not None %}
+          <div class="small text-warning fw-semibold">{{ item.days_remaining }} kun qoldi</div>
+          {% endif %}
+        </td>
+        <td>{{ item.total_due|money }}</td>
+        <td class="text-success fw-semibold">{{ item.paid|money }}</td>
+        <td class="{% if item.debt > 0 %}text-danger fw-semibold{% else %}text-muted{% endif %}">
+          {{ item.debt|money }}
+        </td>
+        <td>
+          <span class="badge {{ item.payment_status|status_badge }}">
+            {{ item.payment_status|status_label }}
+          </span>
+        </td>
+        <td class="text-end text-nowrap">
+          {% if item.debt > 0 %}
+          <a href="{% url 'payments:payment_create' item.student.pk %}" class="btn btn-sm btn-success">To'lov</a>
+          {% endif %}
+          <a href="{% url 'students:detail' item.student.pk %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="10" class="text-muted text-center py-5">
+          Siz olib kelgan o'quvchilar topilmadi
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

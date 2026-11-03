@@ -6,7 +6,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
 from apps.accounts.models import User
-from apps.core.mixins import AdminRequiredMixin, AnyRoleRequiredMixin
+from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin
 
 from .forms import GroupForm
 from .models import Group
@@ -38,10 +38,25 @@ class GroupListView(AnyRoleRequiredMixin, ListView):
         q = self.request.GET.get('q', '').strip()
         if q:
             qs = qs.filter(name__icontains=q)
+        category = self.request.GET.get('category', '').strip()
+        if category:
+            qs = qs.filter(category__iexact=category)
         status = self.request.GET.get('status', '')
         if status:
             qs = qs.filter(status=status)
         return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_qs = visible_groups_queryset(self.request.user)
+        db_categories = list(base_qs.order_by().values_list('category', flat=True).distinct())
+        default_cats = ['A', 'B', 'BC', 'C', 'D']
+        categories = []
+        for c in default_cats + db_categories:
+            if c and c.upper() not in [x.upper() for x in categories]:
+                categories.append(c.upper())
+        context['categories'] = categories
+        return context
 
 
 class GroupCreateView(AdminRequiredMixin, View):
@@ -70,18 +85,42 @@ class GroupDetailView(AnyRoleRequiredMixin, View):
     template_name = 'groups/group_detail.html'
 
     def get(self, request, pk):
-        from apps.payments.services import enrollment_summary
+        from apps.payments.services import can_collect_payment, enrollment_summary
 
         group = _get_visible_group_or_404(request.user, pk)
-        memberships = group.group_students.filter(left_at__isnull=True).select_related('student')
-        enrollment_summaries = [enrollment_summary(e) for e in group.enrollments.all()]
+        memberships = list(
+            group.group_students.filter(left_at__isnull=True).select_related('student', 'student__brought_by_user_id')
+        )
+        enrollments_by_student = {
+            e.student_id: enrollment_summary(e) for e in group.enrollments.all()
+        }
+        total_paid = 0
+        total_debt = 0
+        for m in memberships:
+            summary = enrollments_by_student.get(m.student_id)
+            if summary is None:
+                summary = {
+                    'enrollment': None,
+                    'total_due': group.price,
+                    'paid': 0,
+                    'debt': group.price,
+                    'status': 'unpaid',
+                    'next_due_date': None,
+                }
+            m.payment_info = summary
+            m.can_collect = can_collect_payment(request.user, m.student)
+            total_paid += summary['paid']
+            total_debt += summary['debt']
+
         context = {
             'group': group,
             'memberships': memberships,
+            'memberships_count': len(memberships),
             'teachers': User.objects.filter(group_teacher_links__group=group),
             'instructors': User.objects.filter(group_instructor_links__group=group),
-            'total_paid': sum(s['paid'] for s in enrollment_summaries),
-            'total_debt': sum(s['debt'] for s in enrollment_summaries),
+            'total_paid': total_paid,
+            'total_debt': total_debt,
+            'can_add_student': request.user.is_admin() or request.user.is_teacher() or request.user.is_instructor(),
         }
         if request.user.is_admin():
             context['available_teachers'] = User.objects.filter(role=User.Role.TEACHER, is_active=True).exclude(
@@ -157,13 +196,13 @@ class GroupStaffAssignView(AdminRequiredMixin, View):
         return redirect('groups:detail', pk=pk)
 
 
-class GroupStudentSearchView(AdminRequiredMixin, View):
+class GroupStudentSearchView(AnyRoleRequiredMixin, View):
     """Guruhga biriktirish uchun hali a'zo bo'lmagan o'quvchilarni qidirish (htmx)."""
 
     def get(self, request, pk):
         from apps.students.models import Student
 
-        group = get_object_or_404(Group, pk=pk)
+        group = _get_visible_group_or_404(request.user, pk)
         q = request.GET.get('q', '').strip()
         results = Student.objects.filter(status=Student.Status.ACTIVE).exclude(
             group_memberships__group=group, group_memberships__left_at__isnull=True
@@ -174,11 +213,11 @@ class GroupStudentSearchView(AdminRequiredMixin, View):
         return render(request, 'groups/_student_search_results.html', {'group': group, 'results': results})
 
 
-class GroupStudentAddView(AdminRequiredMixin, View):
+class GroupStudentAddView(AnyRoleRequiredMixin, View):
     def post(self, request, pk):
         from apps.students.models import Student
 
-        group = get_object_or_404(Group, pk=pk)
+        group = _get_visible_group_or_404(request.user, pk)
         student = get_object_or_404(Student, pk=request.POST.get('student_id'))
         try:
             add_student_to_group(request.user, group, student)

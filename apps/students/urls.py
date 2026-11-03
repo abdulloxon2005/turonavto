@@ -6,7 +6,10 @@ app_name = 'students'
 
 urlpatterns = [
     path('', views.StudentListView.as_view(), name='list'),
+    path('olib-kelganlarim/', views.MyBroughtStudentsView.as_view(), name='my_brought'),
     path('yangi/', views.StudentCreateView.as_view(), name='create'),
+    path('excel-import/', views.StudentExcelImportView.as_view(), name='import_excel'),
+    path('excel-namuna/', views.StudentExcelSampleView.as_view(), name='import_sample'),
     path('ochirish-sorovlari/', views.DeleteRequestListView.as_view(), name='delete_requests'),
     path('ochirish-sorovlari/<int:pk>/<str:decision>/', views.DeleteRequestDecideView.as_view(), name='delete_request_decide'),
     path('<int:pk>/', views.StudentDetailView.as_view(), name='detail'),

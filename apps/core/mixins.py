@@ -48,3 +48,8 @@ class AnyRoleRequiredMixin(RoleRequiredMixin):
 
 class AdminOrInstructorRequiredMixin(RoleRequiredMixin):
     allowed_roles = ('admin', 'instructor')
+
+
+class AdminOrTeacherRequiredMixin(RoleRequiredMixin):
+    allowed_roles = ('admin', 'teacher')
+

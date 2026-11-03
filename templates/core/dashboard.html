@@ -54,19 +54,83 @@
 
 {% if role == 'teacher' and stats %}
 <div class="row g-3 mb-4">
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Olib kelgan o'quvchilar</small><strong class="fs-5">{{ stats.students_count }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Jami undirgan</small><strong class="fs-5">{{ stats.total_collected|money }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi tushum</small><strong class="fs-5">{{ stats.month_revenue|money }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Qolgan qarz</small><strong class="fs-5 text-danger">{{ stats.total_debt|money }}</strong></div></div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-primary">
+      <small class="text-muted">Jami o'quvchilari (guruhda)</small>
+      <strong class="fs-4 mt-1">{{ stats.students_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-info">
+      <small class="text-muted">Olib kelgan o'quvchilari</small>
+      <strong class="fs-4 mt-1">{{ stats.brought_students_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-secondary">
+      <small class="text-muted">Guruhlarim</small>
+      <strong class="fs-4 mt-1">{{ stats.groups_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-success">
+      <small class="text-muted">To'lov qildirdi (jami)</small>
+      <strong class="fs-5 mt-1 text-success">{{ stats.total_collected|money }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-success">
+      <small class="text-muted">Bu oydagi to'lov</small>
+      <strong class="fs-5 mt-1">{{ stats.month_revenue|money }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-danger">
+      <small class="text-muted">Qolgan qarz</small>
+      <strong class="fs-5 mt-1 text-danger">{{ stats.total_debt|money }}</strong>
+    </div>
+  </div>
 </div>
 {% endif %}
 
 {% if role == 'instructor' and stats %}
 <div class="row g-3 mb-4">
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bugun undirgan</small><strong class="fs-5">{{ stats.collected_today|money }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oyda undirgan</small><strong class="fs-5">{{ stats.collected_month|money }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Qarzdor o'quvchilar</small><strong class="fs-5 text-danger">{{ stats.debtors_count }}</strong></div></div>
-  <div class="col-md-3"><div class="card card-body"><small class="text-muted">Bu oy o'tkazilgan soat</small><strong class="fs-5">{{ stats.month_hours }}</strong></div></div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-primary">
+      <small class="text-muted">Jami o'quvchilarim</small>
+      <strong class="fs-4 mt-1">{{ stats.students_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-info">
+      <small class="text-muted">Olib kelgan o'quvchilarim</small>
+      <strong class="fs-4 mt-1">{{ stats.brought_students_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-secondary">
+      <small class="text-muted">Guruhlarim</small>
+      <strong class="fs-4 mt-1">{{ stats.groups_count }} ta</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-success">
+      <small class="text-muted">To'lov qildirdi (jami)</small>
+      <strong class="fs-5 mt-1 text-success">{{ stats.total_collected|money }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-success">
+      <small class="text-muted">Bu oydagi to'lov</small>
+      <strong class="fs-5 mt-1">{{ stats.month_revenue|money }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card card-body h-100 border-start border-4 border-danger">
+      <small class="text-muted">Qolgan qarz</small>
+      <strong class="fs-5 mt-1 text-danger">{{ stats.total_debt|money }}</strong>
+    </div>
+  </div>
 </div>
 {% endif %}
 
@@ -101,6 +165,37 @@
   </div>
   {% endif %}
 
+  {% if role == 'teacher' or role == 'instructor' %}
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Guruhlarim</h6>
+        <p class="text-muted small">Sizga biriktirilgan guruhlar va o'quvchilar</p>
+        <a href="{% url 'groups:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">O'quvchilar</h6>
+        <p class="text-muted small">Sizga biriktirilgan va olib kelgan barcha o'quvchilar, to'lov va qarzlar</p>
+        <a href="{% url 'students:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="card-title">Olib kelgan o'quvchilarim</h6>
+        <p class="text-muted small">O'zingiz olib kelgan o'quvchilar va to'lov holatlari</p>
+        <a href="{% url 'students:my_brought' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if role != 'instructor' %}
   <div class="col-md-4">
     <div class="card">
       <div class="card-body">
@@ -110,7 +205,9 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
+  {% if role == 'admin' %}
   <div class="col-md-4">
     <div class="card">
       <div class="card-body">
@@ -120,19 +217,9 @@
       </div>
     </div>
   </div>
-
-  {% if role == 'instructor' %}
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Amaliyot darslari</h6>
-        <p class="text-muted small">Dars jadvali va qatnashish</p>
-        <a href="{% url 'lessons:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
-      </div>
-    </div>
-  </div>
   {% endif %}
 
+  {% if role != 'instructor' %}
   <div class="col-md-4">
     <div class="card">
       <div class="card-body">
@@ -142,6 +229,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
 {% endblock %}
 

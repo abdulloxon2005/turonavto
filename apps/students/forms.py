@@ -50,3 +50,27 @@ class DeleteRequestDecisionForm(forms.Form):
     note = forms.CharField(
         label='Izoh', required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2})
     )
+
+
+class StudentExcelImportForm(forms.Form):
+    group = forms.ModelChoiceField(
+        queryset=Group.objects.none(),
+        required=True,
+        label='Guruh',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    excel_file = forms.FileField(
+        label='Excel fayl (.xlsx)',
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.xlsx'}),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            if user.is_admin() or user.is_instructor():
+                self.fields['group'].queryset = Group.objects.filter(status=Group.Status.OPEN)
+            elif user.is_teacher():
+                self.fields['group'].queryset = Group.objects.filter(
+                    status=Group.Status.OPEN, group_teachers__user=user
+                ).distinct()
+
