@@ -86,7 +86,7 @@
           <a href="{% url 'groups:detail' group.pk %}" class="btn btn-sm btn-primary flex-grow-1">
             <i class="bi bi-box-arrow-in-right me-1"></i>Ichiga kirish ({{ group.active_student_count }})
           </a>
-          {% if group.status == 'open' and not group.is_full %}
+          {% if group.status == 'open' and not group.is_full and (user.is_admin or user.is_teacher) %}
           <a href="{% url 'students:create' %}?group={{ group.pk }}" class="btn btn-sm btn-outline-success" title="Shu guruhga o'quvchi qo'shish">
             <i class="bi bi-person-plus"></i>
           </a>

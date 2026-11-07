@@ -7,6 +7,7 @@
     <h4 class="mb-0">Men olib kelgan o'quvchilar</h4>
     <small class="text-muted">Siz olib kelgan barcha o'quvchilarning o'qish jarayoni (O'qimoqda / Oz qoldi / Tugatdi) va to'lov holatlari</small>
   </div>
+  {% if user.is_admin or user.is_teacher %}
   <div class="d-flex flex-wrap gap-2">
     <a href="{% url 'students:import_excel' %}" class="btn btn-success btn-sm">
       <i class="bi bi-file-earmark-excel me-1"></i>Exceldan ko'plab qo'shish
@@ -15,6 +16,7 @@
       <i class="bi bi-person-plus me-1"></i>+ Yangi o'quvchi qo'shish
     </a>
   </div>
+  {% endif %}
 </div>
 
 <div class="row g-3 mb-4">

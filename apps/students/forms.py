@@ -35,9 +35,6 @@ class StudentForm(forms.ModelForm):
                     status=Group.Status.OPEN, group_teachers__user=user
                 ).distinct()
                 self.fields['group'].required = True
-            elif user.is_instructor():
-                self.fields['group'].queryset = Group.objects.filter(status=Group.Status.OPEN)
-                self.fields['group'].required = True
         else:
             del self.fields['group']
 
@@ -67,7 +64,7 @@ class StudentExcelImportForm(forms.Form):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         if user is not None:
-            if user.is_admin() or user.is_instructor():
+            if user.is_admin():
                 self.fields['group'].queryset = Group.objects.filter(status=Group.Status.OPEN)
             elif user.is_teacher():
                 self.fields['group'].queryset = Group.objects.filter(

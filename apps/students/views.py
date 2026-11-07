@@ -7,7 +7,7 @@ from django.views import View
 from django.views.generic import ListView
 
 from apps.accounts.models import User
-from apps.core.mixins import AdminRequiredMixin, AnyRoleRequiredMixin, StaffRequiredMixin
+from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin, StaffRequiredMixin
 
 from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentExcelImportForm, StudentForm
 from .models import DeleteRequest, Student
@@ -180,7 +180,7 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
-class StudentCreateView(AnyRoleRequiredMixin, View):
+class StudentCreateView(AdminOrTeacherRequiredMixin, View):
     template_name = 'students/student_form.html'
 
     def get(self, request):
@@ -243,7 +243,7 @@ class StudentCreateView(AnyRoleRequiredMixin, View):
         return redirect('students:detail', pk=student.pk)
 
 
-class StudentExcelImportView(AnyRoleRequiredMixin, View):
+class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
     template_name = 'students/student_import.html'
 
     def get(self, request):

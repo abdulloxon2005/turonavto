@@ -120,7 +120,7 @@ class GroupDetailView(AnyRoleRequiredMixin, View):
             'instructors': User.objects.filter(group_instructor_links__group=group),
             'total_paid': total_paid,
             'total_debt': total_debt,
-            'can_add_student': request.user.is_admin() or request.user.is_teacher() or request.user.is_instructor(),
+            'can_add_student': request.user.is_admin() or request.user.is_teacher(),
         }
         if request.user.is_admin():
             context['available_teachers'] = User.objects.filter(role=User.Role.TEACHER, is_active=True).exclude(
@@ -196,7 +196,7 @@ class GroupStaffAssignView(AdminRequiredMixin, View):
         return redirect('groups:detail', pk=pk)
 
 
-class GroupStudentSearchView(AnyRoleRequiredMixin, View):
+class GroupStudentSearchView(AdminOrTeacherRequiredMixin, View):
     """Guruhga biriktirish uchun hali a'zo bo'lmagan o'quvchilarni qidirish (htmx)."""
 
     def get(self, request, pk):
@@ -213,7 +213,7 @@ class GroupStudentSearchView(AnyRoleRequiredMixin, View):
         return render(request, 'groups/_student_search_results.html', {'group': group, 'results': results})
 
 
-class GroupStudentAddView(AnyRoleRequiredMixin, View):
+class GroupStudentAddView(AdminOrTeacherRequiredMixin, View):
     def post(self, request, pk):
         from apps.students.models import Student
 

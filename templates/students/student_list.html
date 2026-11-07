@@ -11,12 +11,14 @@
     <a href="{% url 'students:my_brought' %}" class="btn btn-outline-primary btn-sm">
       <i class="bi bi-person-check me-1"></i>Olib kelgan o'quvchilarim
     </a>
+    {% if user.is_admin or user.is_teacher %}
     <a href="{% url 'students:import_excel' %}" class="btn btn-success btn-sm">
       <i class="bi bi-file-earmark-excel me-1"></i>Exceldan qo'shish
     </a>
     <a href="{% url 'students:create' %}" class="btn btn-primary btn-sm">
       <i class="bi bi-person-plus me-1"></i>+ Yangi o'quvchi
     </a>
+    {% endif %}
   </div>
 </div>
 
