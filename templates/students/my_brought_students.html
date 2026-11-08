@@ -5,12 +5,12 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <div>
     <h4 class="mb-0">Men olib kelgan o'quvchilar</h4>
-    <small class="text-muted">Siz olib kelgan barcha o'quvchilarning o'qish jarayoni (O'qimoqda / Oz qoldi / Tugatdi) va to'lov holatlari</small>
+    <small class="text-muted">Siz olib kelgan barcha o'quvchilarning o'qish jarayoni (O'qimoqda / Tugatdi) va to'lov holatlari</small>
   </div>
   {% if user.is_admin or user.is_teacher %}
   <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'students:import_excel' %}" class="btn btn-success btn-sm">
-      <i class="bi bi-file-earmark-excel me-1"></i>Exceldan ko'plab qo'shish
+    <a href="{% url 'students:import_word' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-word me-1"></i>Word orqali ko'plab qo'shish
     </a>
     <a href="{% url 'students:create' %}" class="btn btn-primary btn-sm">
       <i class="bi bi-person-plus me-1"></i>+ Yangi o'quvchi qo'shish
@@ -33,14 +33,6 @@
       <div class="card card-body h-100 {% if learning_filter == 'studying' %}border-primary border-2{% endif %}">
         <small class="text-muted">O'qimoqda</small>
         <strong class="fs-4 text-primary">{{ stats.studying }} ta</strong>
-      </div>
-    </a>
-  </div>
-  <div class="col-6 col-md-4 col-lg-2">
-    <a href="?learning_status=ending_soon" class="text-decoration-none">
-      <div class="card card-body h-100 {% if learning_filter == 'ending_soon' %}border-warning border-2{% endif %}">
-        <small class="text-muted">Oz qoldi</small>
-        <strong class="fs-4 text-warning">{{ stats.ending_soon }} ta</strong>
       </div>
     </a>
   </div>
@@ -78,18 +70,15 @@
     <select name="learning_status" class="form-select">
       <option value="">O'qish holati: Barchasi</option>
       <option value="studying" {% if learning_filter == 'studying' %}selected{% endif %}>O'qimoqda</option>
-      <option value="ending_soon" {% if learning_filter == 'ending_soon' %}selected{% endif %}>Oz qoldi</option>
       <option value="finished" {% if learning_filter == 'finished' %}selected{% endif %}>Tugatdi</option>
     </select>
   </div>
   <div class="col-auto">
     <select name="payment_status" class="form-select">
       <option value="">To'lov holati: Barchasi</option>
-      <option value="debtor" {% if payment_filter == 'debtor' %}selected{% endif %}>Qarzdorlar</option>
       <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>To'langan</option>
-      <option value="partial" {% if payment_filter == 'partial' %}selected{% endif %}>Qisman</option>
-      <option value="unpaid" {% if payment_filter == 'unpaid' %}selected{% endif %}>To'lanmagan</option>
-      <option value="overdue" {% if payment_filter == 'overdue' %}selected{% endif %}>Muddati o'tgan</option>
+      <option value="partial" {% if payment_filter == 'partial' %}selected{% endif %}>Qisman to'langan</option>
+      <option value="debtor" {% if payment_filter == 'debtor' %}selected{% endif %}>Qarzdor</option>
     </select>
   </div>
   {% if group_options %}
@@ -158,9 +147,6 @@
           <span class="badge {{ item.learning_status|status_badge }}">
             {{ item.learning_status|status_label }}
           </span>
-          {% if item.learning_status == 'ending_soon' and item.days_remaining is not None %}
-          <div class="small text-warning fw-semibold">{{ item.days_remaining }} kun qoldi</div>
-          {% endif %}
         </td>
         <td>{{ item.total_due|money }}</td>
         <td class="text-success fw-semibold">{{ item.paid|money }}</td>

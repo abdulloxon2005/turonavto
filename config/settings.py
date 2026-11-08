@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'apps.students',
     'apps.payments',
     'apps.lessons',
+    'apps.exams',
     'apps.expenses',
     'apps.notifications',
     'apps.reports',
@@ -140,6 +141,9 @@ LANGUAGE_CODE = 'uz'
 TIME_ZONE = config('TIME_ZONE', default='Asia/Tashkent')
 USE_I18N = True
 USE_TZ = True
+
+# Sanalar kun.oy.yil (d.m.Y) ko'rinishida chiqishi uchun
+FORMAT_MODULE_PATH = ['config.formats']
 
 
 # Static & media files

@@ -8,12 +8,9 @@
     <small class="text-muted">Barcha biriktirilgan va olib kelgan o'quvchilarning ma'lumotlari, guruhi, o'qish va to'lov/qarz holatlari</small>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'students:my_brought' %}" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-person-check me-1"></i>Olib kelgan o'quvchilarim
-    </a>
     {% if user.is_admin or user.is_teacher %}
-    <a href="{% url 'students:import_excel' %}" class="btn btn-success btn-sm">
-      <i class="bi bi-file-earmark-excel me-1"></i>Exceldan qo'shish
+    <a href="{% url 'students:import_word' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-word me-1"></i>Word orqali qo'shish
     </a>
     <a href="{% url 'students:create' %}" class="btn btn-primary btn-sm">
       <i class="bi bi-person-plus me-1"></i>+ Yangi o'quvchi
@@ -37,14 +34,6 @@
       <div class="card card-body h-100 {% if learning_filter == 'studying' %}border-primary border-2{% endif %}">
         <small class="text-muted">O'qimoqda</small>
         <strong class="fs-4 text-primary">{{ stats.studying }} ta</strong>
-      </div>
-    </a>
-  </div>
-  <div class="col-6 col-md-4 col-lg-2">
-    <a href="?learning_status=ending_soon" class="text-decoration-none">
-      <div class="card card-body h-100 {% if learning_filter == 'ending_soon' %}border-warning border-2{% endif %}">
-        <small class="text-muted">Oz qoldi</small>
-        <strong class="fs-4 text-warning">{{ stats.ending_soon }} ta</strong>
       </div>
     </a>
   </div>
@@ -89,18 +78,15 @@
     <select name="learning_status" class="form-select">
       <option value="">O'qish holati: Barchasi</option>
       <option value="studying" {% if learning_filter == 'studying' %}selected{% endif %}>O'qimoqda</option>
-      <option value="ending_soon" {% if learning_filter == 'ending_soon' %}selected{% endif %}>Oz qoldi</option>
       <option value="finished" {% if learning_filter == 'finished' %}selected{% endif %}>Tugatdi</option>
     </select>
   </div>
   <div class="col-auto">
     <select name="payment_status" class="form-select">
       <option value="">To'lov holati: Barchasi</option>
-      <option value="debtor" {% if payment_filter == 'debtor' %}selected{% endif %}>Qarzdorlar</option>
       <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>To'langan</option>
-      <option value="partial" {% if payment_filter == 'partial' %}selected{% endif %}>Qisman</option>
-      <option value="unpaid" {% if payment_filter == 'unpaid' %}selected{% endif %}>To'lanmagan</option>
-      <option value="overdue" {% if payment_filter == 'overdue' %}selected{% endif %}>Muddati o'tgan</option>
+      <option value="partial" {% if payment_filter == 'partial' %}selected{% endif %}>Qisman to'langan</option>
+      <option value="debtor" {% if payment_filter == 'debtor' %}selected{% endif %}>Qarzdor</option>
     </select>
   </div>
   {% if user.is_admin %}
@@ -115,6 +101,7 @@
     <select name="status" class="form-select">
       <option value="active" {% if request.GET.status == 'active' or not request.GET.status %}selected{% endif %}>Faol</option>
       <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Arxivlangan</option>
+      <option value="expelled" {% if request.GET.status == 'expelled' %}selected{% endif %}>Chetlatilgan</option>
       <option value="">Barchasi</option>
     </select>
   </div>
@@ -148,7 +135,8 @@
       <tr>
         <td class="text-muted">{{ forloop.counter }}</td>
         <td>
-          <a href="{% url 'students:detail' s.pk %}" class="fw-semibold text-decoration-none">{{ s.full_name }}</a>
+          <a href="{% url 'students:detail' s.pk %}" class="fw-semibold text-decoration-none {% if s.status == 'expelled' %}text-danger{% endif %}">{{ s.full_name }}</a>
+          {% if s.status == 'expelled' %}<span class="badge bg-danger ms-1">Chetlatilgan</span>{% endif %}
           <div class="small text-muted">
             {% if s.passport_no %}Pasport: {{ s.passport_no }} · {% endif %}
             {% if s.birth_date %}{{ s.birth_date }} · {% endif %}
@@ -176,9 +164,6 @@
           <span class="badge {{ s.enriched.learning_status|status_badge }}">
             {{ s.enriched.learning_status|status_label }}
           </span>
-          {% if s.enriched.learning_status == 'ending_soon' and s.enriched.days_remaining is not None %}
-          <div class="small text-warning fw-semibold">{{ s.enriched.days_remaining }} kun qoldi</div>
-          {% endif %}
         </td>
         <td>{{ s.enriched.total_due|money }}</td>
         <td class="text-success fw-semibold">{{ s.enriched.paid|money }}</td>

@@ -17,7 +17,16 @@
   <tbody>
     {% for staff in staff_list %}
     <tr>
-      <td><a href="{% url 'accounts:staff_detail' staff.pk %}">{{ staff.full_name }}</a></td>
+      <td>
+        <a href="{% url 'accounts:staff_detail' staff.pk %}" class="d-flex align-items-center gap-2 text-decoration-none">
+          {% if staff.photo %}
+          <img src="{{ staff.photo.url }}" alt="" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
+          {% else %}
+          <i class="bi bi-person-circle fs-5 text-muted"></i>
+          {% endif %}
+          {{ staff.full_name }}
+        </a>
+      </td>
       <td>{{ staff.phone }}</td>
       <td>{{ staff.get_role_display }}</td>
       <td>

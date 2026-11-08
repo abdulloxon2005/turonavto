@@ -5,7 +5,16 @@
   <div class="col-md-6">
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">{{ staff.full_name }}</h5>
+        <div class="d-flex align-items-center gap-3 mb-2">
+          {% if staff.photo %}
+          <img src="{{ staff.photo.url }}" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
+          {% else %}
+          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width:64px;height:64px;">
+            <i class="bi bi-person fs-3 text-muted"></i>
+          </div>
+          {% endif %}
+          <h5 class="card-title mb-0">{{ staff.full_name }}</h5>
+        </div>
         <p class="mb-1"><strong>Telefon:</strong> {{ staff.phone }}</p>
         <p class="mb-1"><strong>Rol:</strong> {{ staff.get_role_display }}</p>
         <p class="mb-1">

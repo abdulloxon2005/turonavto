@@ -28,7 +28,9 @@ class PhoneBackend(ModelBackend):
             self._register_failure(attempt)
             return None
 
-        if user.check_password(password) and self.user_can_authenticate(user):
+        if user.check_password(password):
+            # is_active tekshiruvi shu yerda emas, LoginView'da amalga oshiriladi —
+            # shunda bloklangan hodim aniq xabar oladi va urinish muvaffaqiyatsiz hisoblanmaydi.
             if attempt.failed_count or attempt.locked_until:
                 attempt.failed_count = 0
                 attempt.locked_until = None

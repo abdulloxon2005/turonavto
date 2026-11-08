@@ -7,6 +7,7 @@ STATUS_BADGES = {
     'partial': 'bg-warning text-dark',
     'paid': 'bg-success',
     'overdue': 'bg-danger',
+    'debtor': 'bg-danger',
     'confirmed': 'bg-success',
     'cancelled': 'bg-danger',
     'active': 'bg-success',
@@ -20,13 +21,15 @@ STATUS_BADGES = {
     'ending_soon': 'bg-warning text-dark',
     'finished': 'bg-success',
     'no_group': 'bg-secondary',
+    'expelled': 'bg-danger',
 }
 
 STATUS_LABELS = {
     'unpaid': "To'lanmagan",
-    'partial': 'Qisman',
+    'partial': "Qisman to'langan",
     'paid': "To'langan",
     'overdue': "Muddati o'tgan",
+    'debtor': 'Qarzdor',
     'confirmed': 'Tasdiqlangan',
     'cancelled': 'Bekor qilingan',
     'active': 'Faol',
@@ -40,6 +43,7 @@ STATUS_LABELS = {
     'ending_soon': 'Oz qoldi',
     'finished': 'Tugatdi',
     'no_group': 'Guruhsiz',
+    'expelled': 'Chetlatilgan',
 }
 
 

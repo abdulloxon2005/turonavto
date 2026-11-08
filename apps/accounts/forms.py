@@ -31,7 +31,7 @@ class StaffForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['full_name', 'phone', 'role', 'is_active']
+        fields = ['full_name', 'phone', 'role', 'photo', 'is_active']
         widgets = {
             'role': forms.Select(attrs={'class': 'form-select'}),
         }

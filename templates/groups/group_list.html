@@ -29,14 +29,22 @@
   <div class="col-auto">
     <select name="status" class="form-select">
       <option value="">Barcha holatlar</option>
-      <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Ochiq</option>
-      <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Yopiq</option>
       <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Arxivlangan</option>
     </select>
   </div>
+  {% if teachers %}
+  <div class="col-auto">
+    <select name="teacher" class="form-select">
+      <option value="">Barcha o'qituvchilar</option>
+      {% for t in teachers %}
+      <option value="{{ t.pk }}" {% if request.GET.teacher == t.pk|stringformat:'s' %}selected{% endif %}>{{ t.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
   <div class="col-auto">
     <button class="btn btn-outline-secondary">Filtr</button>
-    {% if request.GET.q or request.GET.category or request.GET.status %}
+    {% if request.GET.q or request.GET.category or request.GET.status or request.GET.teacher %}
     <a href="{% url 'groups:list' %}" class="btn btn-link text-secondary">Tozalash</a>
     {% endif %}
   </div>
@@ -55,28 +63,34 @@
             <span class="badge bg-dark fs-6">Toifa: {{ group.category }}</span>
           </div>
           <div class="text-end">
-            <span class="badge {{ group.status|status_badge }}">{{ group.status|status_label }}</span>
-            <div class="mt-1">
-              <span class="badge {{ group.learning_status|status_badge }}">{{ group.learning_status|status_label }}</span>
-            </div>
+            <span class="badge {{ group.learning_status|status_badge }}">{{ group.learning_status|status_label }}</span>
           </div>
         </div>
 
         <div class="my-2 p-2 bg-light rounded">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="small text-muted"><i class="bi bi-people-fill me-1"></i>O'quvchilar soni:</span>
-            <strong>{{ group.active_student_count }} / {{ group.max_students }} ta</strong>
+            <span class="small text-muted"><i class="bi bi-cash-coin me-1"></i>To'lovlar holati:</span>
+            <strong>{{ group.payment_percent }}%</strong>
           </div>
           <div class="progress" style="height: 6px;">
-            <div class="progress-bar {% if group.is_full %}bg-danger{% else %}bg-primary{% endif %}"
+            <div class="progress-bar {% if group.learning_status == 'finished' and group.payment_percent < 100 %}bg-danger{% elif group.payment_percent >= 100 %}bg-success{% elif group.payment_percent >= 50 %}bg-primary{% else %}bg-warning{% endif %}"
                  role="progressbar"
-                 style="width: {{ group.capacity_percent }}%;"></div>
+                 style="width: {{ group.payment_percent }}%;"></div>
           </div>
+          <div class="small text-muted mt-1">{{ group.payment_paid|money }} / {{ group.payment_due|money }}</div>
         </div>
 
         <ul class="list-unstyled small text-muted mb-3 flex-grow-1">
+          <li class="mb-1"><i class="bi bi-people-fill me-1"></i><strong>O'quvchilar:</strong> {{ group.active_student_count }} / {{ group.max_students }} ta</li>
           <li class="mb-1"><i class="bi bi-cash me-1"></i><strong>Kurs narxi:</strong> {{ group.price|money }}</li>
-          <li class="mb-1"><i class="bi bi-calendar-event me-1"></i><strong>Muddat:</strong> {{ group.start_date }}{% if group.end_date %} — {{ group.end_date }}{% endif %}</li>
+          <li class="mb-1"><i class="bi bi-calendar-event me-1"></i><strong>Boshlanish:</strong> {{ group.start_date }}</li>
+          <li class="mb-1">
+            <i class="bi bi-calendar-check me-1"></i><strong>Tugash:</strong>
+            {% if group.end_date %}{{ group.end_date }}{% else %}<span class="text-muted">belgilanmagan</span>{% endif %}
+            {% if group.end_date and group.learning_status != 'finished' %}
+            <span class="badge {% if group.days_remaining <= 14 %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %} ms-1">{{ group.days_remaining }} kun qoldi</span>
+            {% endif %}
+          </li>
           {% if group.schedule %}
           <li class="mb-1"><i class="bi bi-clock me-1"></i><strong>Dars jadvali:</strong> {{ group.schedule }}</li>
           {% endif %}
@@ -84,12 +98,14 @@
 
         <div class="d-flex gap-2 mt-auto">
           <a href="{% url 'groups:detail' group.pk %}" class="btn btn-sm btn-primary flex-grow-1">
-            <i class="bi bi-box-arrow-in-right me-1"></i>Ichiga kirish ({{ group.active_student_count }})
+            <i class="bi bi-info-circle me-1"></i>Batafsil
           </a>
-          {% if group.status == 'open' and not group.is_full and (user.is_admin or user.is_teacher) %}
+          {% if group.status == 'open' and not group.is_full %}
+          {% if user.is_admin or user.is_teacher %}
           <a href="{% url 'students:create' %}?group={{ group.pk }}" class="btn btn-sm btn-outline-success" title="Shu guruhga o'quvchi qo'shish">
             <i class="bi bi-person-plus"></i>
           </a>
+          {% endif %}
           {% endif %}
         </div>
       </div>

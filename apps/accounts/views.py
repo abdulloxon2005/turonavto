@@ -129,13 +129,14 @@ class StaffCreateView(AdminRequiredMixin, View):
         return render(request, self.template_name, {'form': StaffForm()})
 
     def post(self, request):
-        form = StaffForm(request.POST)
+        form = StaffForm(request.POST, request.FILES)
         if form.is_valid():
             user, temp_password = create_staff(
                 request.user,
                 full_name=form.cleaned_data['full_name'],
                 phone=form.cleaned_data['phone'],
                 role=form.cleaned_data['role'],
+                photo=request.FILES.get('photo'),
             )
             messages.success(
                 request,
@@ -170,6 +171,8 @@ class StaffUpdateView(AdminRequiredMixin, UpdateView):
             full_name=form.cleaned_data['full_name'],
             phone=form.cleaned_data['phone'],
             is_active=form.cleaned_data['is_active'],
+            photo=self.request.FILES.get('photo'),
+            remove_photo=self.request.POST.get('remove_photo') == '1',
         )
         messages.success(self.request, "Hodim ma'lumotlari yangilandi")
         return redirect('accounts:staff_detail', pk=self.object.pk)

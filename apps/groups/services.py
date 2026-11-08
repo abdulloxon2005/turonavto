@@ -42,14 +42,6 @@ def _jsonable(d):
 
 
 @transaction.atomic
-def close_group(actor, group):
-    group.status = Group.Status.CLOSED
-    group.save(update_fields=['status'])
-    log_action(actor, action='group.close', entity_type='Group', entity_id=group.pk)
-    return group
-
-
-@transaction.atomic
 def archive_group(actor, group):
     group.status = Group.Status.ARCHIVED
     group.save(update_fields=['status'])

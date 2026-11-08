@@ -15,6 +15,7 @@ class Student(TimeStampedModel):
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Faol'
         ARCHIVED = 'archived', 'Arxivlangan'
+        EXPELLED = 'expelled', 'Chetlatilgan'
 
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, validators=[phone_validator])

@@ -15,7 +15,6 @@ from .services import (
     archive_group,
     assign_instructor,
     assign_teacher,
-    close_group,
     create_group,
     delete_group,
     remove_instructor,
@@ -44,6 +43,9 @@ class GroupListView(AnyRoleRequiredMixin, ListView):
         status = self.request.GET.get('status', '')
         if status:
             qs = qs.filter(status=status)
+        teacher_id = self.request.GET.get('teacher', '').strip()
+        if teacher_id:
+            qs = qs.filter(group_teachers__user_id=teacher_id).distinct()
         return qs
 
     def get_context_data(self, **kwargs):
@@ -56,6 +58,31 @@ class GroupListView(AnyRoleRequiredMixin, ListView):
             if c and c.upper() not in [x.upper() for x in categories]:
                 categories.append(c.upper())
         context['categories'] = categories
+        if self.request.user.is_admin():
+            context['teachers'] = User.objects.filter(role=User.Role.TEACHER, is_active=True).order_by('full_name')
+
+        from django.db.models import Sum
+
+        from apps.payments.models import Enrollment, Payment
+
+        groups = context['groups']
+        group_ids = [g.pk for g in groups]
+        due_by_group = {
+            row['group_id']: row['total'] or 0
+            for row in Enrollment.objects.filter(group_id__in=group_ids).values('group_id').annotate(total=Sum('total_due'))
+        }
+        paid_by_group = {
+            row['enrollment__group_id']: row['total'] or 0
+            for row in Payment.objects.filter(
+                enrollment__group_id__in=group_ids, status=Payment.Status.CONFIRMED
+            ).values('enrollment__group_id').annotate(total=Sum('amount'))
+        }
+        for group in groups:
+            total_due = due_by_group.get(group.pk, 0)
+            paid = paid_by_group.get(group.pk, 0)
+            group.payment_due = total_due
+            group.payment_paid = paid
+            group.payment_percent = min(int(paid * 100 / total_due), 100) if total_due else 0
         return context
 
 
@@ -146,7 +173,6 @@ class GroupUpdateView(AdminRequiredMixin, UpdateView):
 
 class GroupStatusActionView(AdminRequiredMixin, View):
     action_map = {
-        'close': close_group,
         'archive': archive_group,
         'reopen': reopen_group,
     }

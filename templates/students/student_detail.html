@@ -8,7 +8,7 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
-            <h5 class="card-title mb-1">
+            <h5 class="card-title mb-1 {% if student.status == 'expelled' %}text-danger{% endif %}">
               {{ student.full_name }}
               <span class="badge {{ student.status|status_badge }}">{{ student.status|status_label }}</span>
               {% if enriched %}
@@ -19,9 +19,20 @@
           <div class="d-flex gap-2">
             {% if can_edit %}<a href="{% url 'students:update' student.pk %}" class="btn btn-sm btn-outline-secondary">Tahrirlash</a>{% endif %}
             {% if user.is_admin %}
+            {% if student.status == 'expelled' %}
+            <form method="post" action="{% url 'students:expel_toggle' student.pk %}">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-success">Faollashtirish</button>
+            </form>
+            {% else %}
             <form method="post" action="{% url 'students:archive_toggle' student.pk %}">{% csrf_token %}
               <button class="btn btn-sm btn-outline-warning">{% if student.status == 'active' %}Arxivlash{% else %}Faollashtirish{% endif %}</button>
             </form>
+            {% if student.status == 'active' %}
+            <form method="post" action="{% url 'students:expel_toggle' student.pk %}" onsubmit="return confirm('O\'quvchi chetlatilsinmi?')">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger">Chetlatish</button>
+            </form>
+            {% endif %}
+            {% endif %}
             <form method="post" action="{% url 'students:delete' student.pk %}" onsubmit="return confirm('Butunlay o\'chirilsinmi?')">{% csrf_token %}
               <button class="btn btn-sm btn-outline-danger">O'chirish</button>
             </form>
@@ -35,7 +46,7 @@
         <p class="mb-1"><strong>Tug'ilgan sana:</strong> {{ student.birth_date|default:'—' }}</p>
         <p class="mb-1"><strong>Manzil:</strong> {{ student.address|default:'—' }}</p>
         <p class="mb-1"><strong>Kim olib kelgan (Egasi):</strong> {{ student.brought_by_user_id.full_name }}</p>
-        <p class="mb-1"><strong>Qo'shilgan sana:</strong> {{ student.created_at|date:"Y-m-d H:i" }}</p>
+        <p class="mb-1"><strong>Qo'shilgan sana:</strong> {{ student.created_at|date:"d.m.Y H:i" }}</p>
         {% if student.note %}<p class="mb-1"><strong>Izoh:</strong> {{ student.note }}</p>{% endif %}
 
         {% if user.is_admin %}
@@ -76,7 +87,7 @@
             <tbody>
               {% for p in payments %}
               <tr>
-                <td class="small">{{ p.paid_at|date:"Y-m-d H:i" }}</td>
+                <td class="small">{{ p.paid_at|date:"d.m.Y H:i" }}</td>
                 <td><a href="{% url 'payments:detail' p.pk %}" class="text-decoration-none">{{ p.receipt_no }}</a></td>
                 <td class="fw-semibold {% if p.amount < 0 %}text-danger{% else %}text-success{% endif %}">{{ p.amount|money }}</td>
                 <td>{{ p.get_method_display }}</td>
@@ -168,6 +179,67 @@
           <h6 class="card-title mb-0">Amaliyot soatlari</h6>
           <strong>{{ total_hours }} soat</strong>
         </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if enriched.learning_status == 'finished' %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title">Imtihon natijalari</h6>
+        {% for exam_type, info in exam_summary.items %}
+        <div class="border-top pt-2 mt-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>{{ info.label }}</strong>
+            {% if info.passed %}
+            <span class="badge bg-success">O'tdi ({{ info.passed_on_attempt }}-urinishda)</span>
+            {% elif info.attempts_count %}
+            <span class="badge bg-danger">O'tmadi ({{ info.attempts_count }} urinish)</span>
+            {% else %}
+            <span class="badge bg-secondary">Hali topshirmagan</span>
+            {% endif %}
+          </div>
+          {% for a in info.attempts %}
+          <div class="small text-muted d-flex justify-content-between align-items-center mt-1">
+            <span>{{ a.exam_date }} — {% if a.passed %}<span class="text-success">o'tdi</span>{% else %}<span class="text-danger">o'tmadi</span>{% endif %}{% if a.note %} ({{ a.note }}){% endif %}</span>
+            {% if user.is_admin %}
+            <form method="post" action="{% url 'exams:delete' a.pk %}" onsubmit="return confirm('O\'chirilsinmi?')">
+              {% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0">o'chirish</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+
+        {% if can_record_exam %}
+        <form method="post" action="{% url 'exams:create' student.pk %}" class="border-top pt-3 mt-3">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-6">
+              <select name="exam_type" class="form-select form-select-sm">
+                <option value="theory">Nazariy</option>
+                <option value="practice">Amaliy</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <select name="passed" class="form-select form-select-sm">
+                <option value="1">O'tdi</option>
+                <option value="0">O'tmadi</option>
+              </select>
+            </div>
+            <div class="col-8">
+              <input type="date" name="exam_date" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-4">
+              <button type="submit" class="btn btn-sm btn-outline-primary w-100">+ Qo'shish</button>
+            </div>
+            <div class="col-12">
+              <input type="text" name="note" class="form-control form-control-sm" placeholder="Izoh (ixtiyoriy)">
+            </div>
+          </div>
+        </form>
+        {% endif %}
       </div>
     </div>
     {% endif %}

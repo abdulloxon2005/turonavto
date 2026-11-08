@@ -12,4 +12,5 @@ urlpatterns = [
     path('qarzdorlar/', views.DebtorsReportView.as_view(), name='debtors'),
     path('kutilayotgan/', views.UpcomingRevenueReportView.as_view(), name='upcoming'),
     path('kassa/', views.CashReportView.as_view(), name='cash'),
+    path('imtihon-natijalari/', views.ExamResultsReportView.as_view(), name='exam_results'),
 ]

@@ -6,7 +6,7 @@
     <div class="card">
       <div class="card-body p-4">
         <h5 class="card-title mb-3">{% if form.instance.pk %}Hodimni tahrirlash{% else %}Yangi hodim{% endif %}</h5>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">To'liq ism</label>
@@ -25,6 +25,20 @@
               <option value="instructor" {% if form.role.value == 'instructor' %}selected{% endif %}>Instruktor</option>
             </select>
             {% for err in form.role.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rasm</label>
+            {% if form.instance.photo %}
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <img src="{{ form.instance.photo.url }}" alt="" class="rounded" style="width:72px;height:72px;object-fit:cover;">
+              <div class="form-check">
+                <input type="checkbox" name="remove_photo" value="1" class="form-check-input" id="remove_photo">
+                <label class="form-check-label" for="remove_photo">Rasmni o'chirish</label>
+              </div>
+            </div>
+            {% endif %}
+            <input type="file" name="photo" accept=".jpg,.jpeg,.png" class="form-control">
+            {% for err in form.photo.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
           </div>
           {% if form.instance.pk %}
           <div class="form-check mb-3">

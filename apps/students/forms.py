@@ -14,7 +14,7 @@ class StudentForm(forms.ModelForm):
 
     class Meta:
         model = Student
-        fields = ['full_name', 'phone', 'phone2', 'passport_no', 'birth_date', 'address', 'photo', 'note']
+        fields = ['full_name', 'phone', 'phone2', 'birth_date', 'address', 'photo', 'note']
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'note': forms.Textarea(attrs={'rows': 3}),
@@ -49,16 +49,16 @@ class DeleteRequestDecisionForm(forms.Form):
     )
 
 
-class StudentExcelImportForm(forms.Form):
+class StudentWordImportForm(forms.Form):
     group = forms.ModelChoiceField(
         queryset=Group.objects.none(),
         required=True,
         label='Guruh',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    excel_file = forms.FileField(
-        label='Excel fayl (.xlsx)',
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.xlsx'}),
+    word_file = forms.FileField(
+        label='Word fayl (.docx)',
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.docx'}),
     )
 
     def __init__(self, *args, user=None, **kwargs):

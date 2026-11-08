@@ -196,6 +196,14 @@ def unarchive_student(actor, student):
     return student
 
 
+@transaction.atomic
+def expel_student(actor, student):
+    student.status = Student.Status.EXPELLED
+    student.save(update_fields=['status'])
+    log_action(actor, action='student.expel', entity_type='Student', entity_id=student.pk)
+    return student
+
+
 def has_payment_history(student):
     """3-bosqichda `payments` app qo'shilgach, enrollment/payment mavjudligini tekshiradi.
 
@@ -282,7 +290,11 @@ def decide_delete_request(actor, delete_request, approve, note=''):
 
 
 def student_enriched_info(student):
-    """O'quvchining guruhi, o'qish holati (studying/ending_soon/finished) va to'lov holatini qaytaradi."""
+    """O'quvchining guruhi, o'qish holati (studying/finished) va to'lov holatini qaytaradi.
+
+    To'lov holati faqat 3 ta qiymatdan biri bo'ladi: paid, partial, debtor.
+    O'qishni tugatib, to'lovi 100% bo'lmagan o'quvchi har doim 'debtor' hisoblanadi.
+    """
     from apps.payments.services import student_debt_summary
 
     membership = (
@@ -302,7 +314,7 @@ def student_enriched_info(student):
     if student.status == Student.Status.ARCHIVED:
         learning_status = 'finished'
     elif group is not None:
-        learning_status = group.learning_status
+        learning_status = 'finished' if group.learning_status == 'finished' else 'studying'
     else:
         learning_status = 'no_group'
 
@@ -311,17 +323,23 @@ def student_enriched_info(student):
         total_due = sum(e['total_due'] for e in debt_info['enrollments'])
         paid = sum(e['paid'] for e in debt_info['enrollments'])
         debt = debt_info['total_debt']
-        payment_status = debt_info['status'] or 'unpaid'
     elif group is not None:
         total_due = group.price
         paid = 0
         debt = group.price
-        payment_status = 'unpaid'
     else:
         total_due = 0
         paid = 0
         debt = 0
-        payment_status = 'unpaid'
+
+    if debt <= 0 and total_due > 0:
+        payment_status = 'paid'
+    elif learning_status == 'finished':
+        payment_status = 'debtor'
+    elif paid > 0:
+        payment_status = 'partial'
+    else:
+        payment_status = 'debtor'
 
     return {
         'student': student,
@@ -356,7 +374,7 @@ def normalize_phone(raw_phone):
     return f'+{digits}' if len(digits) >= 10 else digits
 
 
-def _parse_excel_date(val):
+def _parse_date_cell(val):
     import datetime
 
     if not val:
@@ -374,26 +392,31 @@ def _parse_excel_date(val):
     return None
 
 
-def bulk_import_students_from_excel(actor, file_obj, group):
-    """Excel (.xlsx) fayldan o'quvchilarni ommaviy o'qib, guruhga qo'shadi."""
+def bulk_import_students_from_word(actor, file_obj, group):
+    """Word (.docx) fayldagi jadvaldan o'quvchilarni ommaviy o'qib, guruhga qo'shadi."""
     import re
-    from openpyxl import load_workbook
+
+    from docx import Document
 
     if group.status != group.Status.OPEN:
         raise ValidationError("Yopilgan yoki arxivlangan guruhga o'quvchi qo'shib bo'lmaydi")
 
     try:
-        wb = load_workbook(filename=file_obj, data_only=True)
+        doc = Document(file_obj)
     except Exception as exc:
-        raise ValidationError("Excel faylni o'qib bo'lmadi. Iltimos, .xlsx formatdagi fayl yuklang.") from exc
+        raise ValidationError("Word faylni o'qib bo'lmadi. Iltimos, .docx formatdagi fayl yuklang.") from exc
 
-    ws = wb.active
-    rows = list(ws.iter_rows(values_only=True))
+    if not doc.tables:
+        raise ValidationError("Word fayl ichida jadval topilmadi. Namuna faylni yuklab, shu shablon asosida to'ldiring.")
+
+    table = doc.tables[0]
+    rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
+    rows = [r for r in rows if any(c for c in r)]
     if not rows:
-        raise ValidationError("Excel fayl bo'sh")
+        raise ValidationError("Word fayldagi jadval bo'sh")
 
     # Sarlavha qatorini aniqlash
-    first_row = [str(c).strip().lower() if c is not None else '' for c in rows[0]]
+    first_row = [c.lower() for c in rows[0]]
     header_keywords = ('ism', 'f.i', 'fio', 'full_name', 'familiya', 'telefon', 'tel', 'phone', 'pasport')
     has_header = any(any(k in cell for k in header_keywords) for cell in first_row)
 
@@ -466,10 +489,8 @@ def bulk_import_students_from_excel(actor, file_obj, group):
 
         raw_passport = _cell(row, 'passport_no')
         passport_no = str(raw_passport).strip().upper().replace(' ', '') if raw_passport else ''
-        if passport_no.endswith('.0'):
-            passport_no = passport_no[:-2]
 
-        birth_date = _parse_excel_date(_cell(row, 'birth_date'))
+        birth_date = _parse_date_cell(_cell(row, 'birth_date'))
         raw_address = _cell(row, 'address')
         address = str(raw_address).strip() if raw_address else ''
         raw_note = _cell(row, 'note')
@@ -503,15 +524,11 @@ def bulk_import_students_from_excel(actor, file_obj, group):
     return created_students, errors
 
 
-def generate_student_import_sample_xlsx():
-    """O'quvchilarni Excel orqali yuklash uchun namuna .xlsx fayl."""
+def generate_student_import_sample_docx():
+    """O'quvchilarni Word orqali yuklash uchun namuna .docx fayl."""
     import io
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "O'quvchilar ro'yxati"
+    from docx import Document
 
     headers = [
         "F.I.Sh (To'liq ism)",
@@ -522,26 +539,30 @@ def generate_student_import_sample_xlsx():
         'Manzil',
         'Izoh',
     ]
-    ws.append(headers)
-    header_fill = PatternFill(start_color='2563EB', end_color='2563EB', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF')
-    for cell in ws[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-
     sample_rows = [
         ['Aliyev Vali G\'ani o\'g\'li', '+998901234567', '+998911234567', 'AD1234567', '2004-05-15', 'Toshkent sh., Chilonzor', ''],
         ['Karimova Malika Rustam qizi', '+998931112233', '', 'AC7654321', '2005-10-20', 'Toshkent sh., Yunusobod', ''],
     ]
-    for r in sample_rows:
-        ws.append(r)
 
-    for column_cells in ws.columns:
-        length = max(len(str(c.value)) if c.value is not None else 0 for c in column_cells)
-        ws.column_dimensions[column_cells[0].column_letter].width = min(max(length + 4, 14), 40)
+    doc = Document()
+    doc.add_heading("O'quvchilar ro'yxati — namuna", level=2)
+
+    table = doc.add_table(rows=1, cols=len(headers))
+    table.style = 'Light Grid Accent 1'
+    header_cells = table.rows[0].cells
+    for i, h in enumerate(headers):
+        header_cells[i].text = h
+        for paragraph in header_cells[i].paragraphs:
+            for run in paragraph.runs:
+                run.bold = True
+
+    for r in sample_rows:
+        row_cells = table.add_row().cells
+        for i, value in enumerate(r):
+            row_cells[i].text = value
 
     buf = io.BytesIO()
-    wb.save(buf)
+    doc.save(buf)
     buf.seek(0)
     return buf.getvalue()
 

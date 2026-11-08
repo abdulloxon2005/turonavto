@@ -15,7 +15,7 @@ def generate_temp_password(length=8):
 
 
 @transaction.atomic
-def create_staff(actor, *, full_name, phone, role):
+def create_staff(actor, *, full_name, phone, role, photo=None):
     temp_password = generate_temp_password()
     user = User.objects.create_user(
         phone=phone,
@@ -24,6 +24,9 @@ def create_staff(actor, *, full_name, phone, role):
         role=role,
         must_change_password=True,
     )
+    if photo:
+        user.photo = photo
+        user.save(update_fields=['photo'])
     log_action(
         actor,
         action='staff.create',
@@ -79,12 +82,20 @@ def delete_staff(actor, user):
 
 
 @transaction.atomic
-def update_staff(actor, user, *, full_name, phone, is_active):
+def update_staff(actor, user, *, full_name, phone, is_active, photo=None, remove_photo=False):
     old_value = {'full_name': user.full_name, 'phone': user.phone, 'is_active': user.is_active}
     user.full_name = full_name
     user.phone = phone
     user.is_active = is_active
-    user.save(update_fields=['full_name', 'phone', 'is_active'])
+    update_fields = ['full_name', 'phone', 'is_active']
+    if photo:
+        user.photo = photo
+        update_fields.append('photo')
+    elif remove_photo and user.photo:
+        user.photo.delete(save=False)
+        user.photo = None
+        update_fields.append('photo')
+    user.save(update_fields=update_fields)
     log_action(
         actor,
         action='staff.update',

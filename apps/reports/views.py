@@ -29,6 +29,12 @@ def _parse_date(value, default):
         return default
 
 
+def _fmt_date(value):
+    if not value:
+        return '—'
+    return value.strftime('%d.%m.%Y')
+
+
 class ReportsIndexView(AdminRequiredMixin, View):
     template_name = 'reports/index.html'
 
@@ -52,11 +58,11 @@ class RevenueReportView(AdminRequiredMixin, View):
         if fmt:
             headers = ['Sana', 'O\'quvchi', 'Summa', 'Usul', 'Qabul qildi']
             rows = [
-                [p.paid_at.strftime('%Y-%m-%d %H:%M'), p.student.full_name, p.amount,
+                [p.paid_at.strftime('%d.%m.%Y %H:%M'), p.student.full_name, p.amount,
                  p.get_method_display(), p.received_by_user_id.full_name]
                 for p in data['payments']
             ]
-            title = f'Tushum hisoboti ({date_from} — {date_to})'
+            title = f'Tushum hisoboti ({_fmt_date(date_from)} — {_fmt_date(date_to)})'
             if fmt == 'xlsx':
                 return export_xlsx('tushum', title, headers, rows)
             return export_pdf('tushum', title, headers, rows)
@@ -110,7 +116,7 @@ class StaffReportView(AdminRequiredMixin, View):
                 [r['user'].full_name, r['user'].get_role_display(), r['students_count'], r['collected'], r['debt']]
                 for r in rows
             ]
-            title = f'Hodimlar bo\'yicha hisobot ({date_from} — {date_to})'
+            title = f'Hodimlar bo\'yicha hisobot ({_fmt_date(date_from)} — {_fmt_date(date_to)})'
             if fmt == 'xlsx':
                 return export_xlsx('hodimlar', title, headers, export_rows)
             return export_pdf('hodimlar', title, headers, export_rows)
@@ -135,7 +141,7 @@ class DebtorsReportView(AdminRequiredMixin, View):
             headers = ["O'quvchi", 'Guruh', 'Qarz', 'Eng eski muddat', 'Kechikish (kun)', 'Egasi']
             export_rows = [
                 [r['enrollment'].student.full_name, r['enrollment'].group.name, r['debt'],
-                 r['oldest_due_date'] or '—', r['overdue_days'], r['enrollment'].student.brought_by_user_id.full_name]
+                 _fmt_date(r['oldest_due_date']), r['overdue_days'], r['enrollment'].student.brought_by_user_id.full_name]
                 for r in rows
             ]
             if fmt == 'xlsx':
@@ -160,7 +166,7 @@ class UpcomingRevenueReportView(AdminRequiredMixin, View):
         if fmt:
             headers = ['Muddat', "O'quvchi", 'Guruh', 'Qolgan summa']
             export_rows = [
-                [i.due_date, i.enrollment.student.full_name, i.enrollment.group.name, i.remaining]
+                [_fmt_date(i.due_date), i.enrollment.student.full_name, i.enrollment.group.name, i.remaining]
                 for i in data['items']
             ]
             if fmt == 'xlsx':
@@ -183,12 +189,22 @@ class CashReportView(AdminRequiredMixin, View):
         if fmt:
             headers = ['Sana', 'Hodim', 'Tizim hisobi', "E'lon qilingan", 'Farq', 'Holat']
             export_rows = [
-                [c.date, c.user.full_name, c.expected_amount, c.declared_amount, c.difference, c.get_status_display()]
+                [_fmt_date(c.date), c.user.full_name, c.expected_amount, c.declared_amount, c.difference, c.get_status_display()]
                 for c in data['closings']
             ]
-            title = f'Kassa hisoboti ({date_from} — {date_to})'
+            title = f'Kassa hisoboti ({_fmt_date(date_from)} — {_fmt_date(date_to)})'
             if fmt == 'xlsx':
                 return export_xlsx('kassa', title, headers, export_rows)
             return export_pdf('kassa', title, headers, export_rows)
 
         return render(request, self.template_name, {'data': data, 'date_from': date_from, 'date_to': date_to})
+
+
+class ExamResultsReportView(AdminRequiredMixin, View):
+    template_name = 'reports/exam_results.html'
+
+    def get(self, request):
+        from apps.exams.services import graduated_students_with_exam_summary
+
+        rows = graduated_students_with_exam_summary()
+        return render(request, self.template_name, {'rows': rows})

@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import IntegrityError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -9,20 +8,21 @@ from django.views.generic import ListView
 from apps.accounts.models import User
 from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin, StaffRequiredMixin
 
-from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentExcelImportForm, StudentForm
+from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentForm, StudentWordImportForm
 from .models import DeleteRequest, Student
 from .services import (
     archive_student,
     assign_instructor,
-    bulk_import_students_from_excel,
+    bulk_import_students_from_word,
     can_edit_student,
     change_owner,
     create_delete_request,
     create_student,
     decide_delete_request,
     delete_student,
+    expel_student,
     find_duplicates,
-    generate_student_import_sample_xlsx,
+    generate_student_import_sample_docx,
     student_enriched_info,
     unarchive_student,
     unassign_instructor,
@@ -71,11 +71,8 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
                 info = student_enriched_info(s)
                 if learning_filter and info['learning_status'] != learning_filter:
                     continue
-                if payment_filter:
-                    if payment_filter == 'debtor' and info['debt'] <= 0:
-                        continue
-                    elif payment_filter != 'debtor' and info['payment_status'] != payment_filter:
-                        continue
+                if payment_filter and info['payment_status'] != payment_filter:
+                    continue
                 matching_ids.append(s.pk)
             qs = qs.filter(pk__in=matching_ids)
 
@@ -99,9 +96,8 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
         context['stats'] = {
             'total': len(all_enriched),
             'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
-            'ending_soon': sum(1 for item in all_enriched if item['learning_status'] == 'ending_soon'),
             'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
-            'debtors_count': sum(1 for item in all_enriched if item['debt'] > 0),
+            'debtors_count': sum(1 for item in all_enriched if item['payment_status'] == 'debtor'),
             'total_paid': sum(item['paid'] for item in all_enriched),
             'total_debt': sum(item['debt'] for item in all_enriched),
         }
@@ -144,7 +140,6 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
         stats = {
             'total': len(all_enriched),
             'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
-            'ending_soon': sum(1 for item in all_enriched if item['learning_status'] == 'ending_soon'),
             'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
             'total_paid': sum(item['paid'] for item in all_enriched),
             'total_debt': sum(item['debt'] for item in all_enriched),
@@ -158,10 +153,7 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
 
         payment_filter = request.GET.get('payment_status', '').strip()
         if payment_filter:
-            if payment_filter == 'debtor':
-                items = [i for i in items if i['debt'] > 0]
-            else:
-                items = [i for i in items if i['payment_status'] == payment_filter]
+            items = [i for i in items if i['payment_status'] == payment_filter]
 
         if request.user.is_teacher():
             group_options = Group.objects.filter(group_teachers__user=request.user).distinct()
@@ -223,7 +215,6 @@ class StudentCreateView(AdminOrTeacherRequiredMixin, View):
                 full_name=data['full_name'],
                 phone=data['phone'],
                 phone2=data['phone2'],
-                passport_no=data['passport_no'],
                 birth_date=data['birth_date'],
                 address=data['address'],
                 photo=data.get('photo'),
@@ -233,9 +224,6 @@ class StudentCreateView(AdminOrTeacherRequiredMixin, View):
         except ValidationError as exc:
             messages.error(request, exc.message)
             return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
-        except IntegrityError:
-            form.add_error('passport_no', 'Bu pasport raqami bilan o\'quvchi allaqachon mavjud')
-            return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
 
         messages.success(request, "O'quvchi qo'shildi")
         if preset_group_id and data.get('group'):
@@ -243,7 +231,7 @@ class StudentCreateView(AdminOrTeacherRequiredMixin, View):
         return redirect('students:detail', pk=student.pk)
 
 
-class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
+class StudentWordImportView(AdminOrTeacherRequiredMixin, View):
     template_name = 'students/student_import.html'
 
     def get(self, request):
@@ -251,19 +239,19 @@ class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
         group_id = request.GET.get('group')
         if group_id:
             initial['group'] = group_id
-        form = StudentExcelImportForm(user=request.user, initial=initial)
+        form = StudentWordImportForm(user=request.user, initial=initial)
         return render(request, self.template_name, {'form': form, 'preset_group_id': group_id})
 
     def post(self, request):
-        form = StudentExcelImportForm(request.POST, request.FILES, user=request.user)
+        form = StudentWordImportForm(request.POST, request.FILES, user=request.user)
         preset_group_id = request.POST.get('preset_group_id') or request.GET.get('group')
         if not form.is_valid():
             return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
 
         group = form.cleaned_data['group']
-        excel_file = form.cleaned_data['excel_file']
+        word_file = form.cleaned_data['word_file']
         try:
-            created_students, errors = bulk_import_students_from_excel(request.user, excel_file, group)
+            created_students, errors = bulk_import_students_from_word(request.user, word_file, group)
         except ValidationError as exc:
             messages.error(request, exc.message)
             return render(request, self.template_name, {'form': form, 'preset_group_id': preset_group_id})
@@ -271,7 +259,7 @@ class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
         if created_students:
             messages.success(
                 request,
-                f"Excel orqali {len(created_students)} ta o'quvchi '{group.name}' guruhiga muvaffaqiyatli qo'shildi!",
+                f"Word fayl orqali {len(created_students)} ta o'quvchi '{group.name}' guruhiga muvaffaqiyatli qo'shildi!",
             )
         if errors:
             for err in errors[:10]:
@@ -279,7 +267,7 @@ class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
             if len(errors) > 10:
                 messages.warning(request, f"... va yana {len(errors) - 10} ta qatorda xatolik bo'ldi.")
         if not created_students and not errors:
-            messages.info(request, "Excel faylda qo'shish uchun yangi qatorlar topilmadi.")
+            messages.info(request, "Word fayldagi jadvalda qo'shish uchun yangi qatorlar topilmadi.")
 
         if created_students:
             return redirect('groups:detail', pk=group.pk)
@@ -290,14 +278,14 @@ class StudentExcelImportView(AdminOrTeacherRequiredMixin, View):
         )
 
 
-class StudentExcelSampleView(AnyRoleRequiredMixin, View):
+class StudentWordSampleView(AnyRoleRequiredMixin, View):
     def get(self, request):
-        content = generate_student_import_sample_xlsx()
+        content = generate_student_import_sample_docx()
         response = HttpResponse(
             content,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         )
-        response['Content-Disposition'] = 'attachment; filename="oquvchilar_namuna.xlsx"'
+        response['Content-Disposition'] = 'attachment; filename="oquvchilar_namuna.docx"'
         return response
 
 
@@ -308,6 +296,7 @@ class StudentDetailView(AnyRoleRequiredMixin, View):
         from apps.payments.models import Payment
         from apps.payments.services import can_collect_payment, student_debt_summary
         from apps.lessons.services import total_hours_for_student
+        from apps.exams.services import exam_summary_for_student
 
         student = _get_visible_student_or_404(request.user, pk)
         payments = (
@@ -315,16 +304,19 @@ class StudentDetailView(AnyRoleRequiredMixin, View):
             .select_related('enrollment__group', 'received_by_user_id')
             .order_by('-paid_at')
         )
+        enriched = student_enriched_info(student)
         context = {
             'student': student,
             'can_edit': can_edit_student(request.user, student) and not request.user.is_teacher(),
             'memberships': student.group_memberships.filter(left_at__isnull=True).select_related('group'),
             'instructor_links': student.instructor_links.select_related('instructor'),
             'debt_summary': student_debt_summary(student),
-            'enriched': student_enriched_info(student),
+            'enriched': enriched,
             'payments': payments,
             'can_collect_payment': can_collect_payment(request.user, student),
             'total_hours': total_hours_for_student(student),
+            'exam_summary': exam_summary_for_student(student),
+            'can_record_exam': (request.user.is_admin() or request.user.is_teacher()) and enriched['learning_status'] == 'finished',
         }
         if request.user.is_admin():
             enrolled_group_ids = student.enrollments.values_list('group_id', flat=True)
@@ -356,16 +348,12 @@ class StudentUpdateView(AnyRoleRequiredMixin, View):
         if not form.is_valid():
             return render(request, self.template_name, {'form': form, 'student': student})
         data = form.cleaned_data
-        try:
-            update_student(
-                request.user, student,
-                full_name=data['full_name'], phone=data['phone'], phone2=data['phone2'],
-                passport_no=data['passport_no'], birth_date=data['birth_date'],
-                address=data['address'], photo=data.get('photo'), note=data['note'],
-            )
-        except IntegrityError:
-            form.add_error('passport_no', 'Bu pasport raqami bilan o\'quvchi allaqachon mavjud')
-            return render(request, self.template_name, {'form': form, 'student': student})
+        update_student(
+            request.user, student,
+            full_name=data['full_name'], phone=data['phone'], phone2=data['phone2'],
+            passport_no=student.passport_no, birth_date=data['birth_date'],
+            address=data['address'], photo=data.get('photo'), note=data['note'],
+        )
         messages.success(request, "O'quvchi ma'lumotlari yangilandi")
         return redirect('students:detail', pk=student.pk)
 
@@ -379,6 +367,18 @@ class StudentArchiveView(AdminRequiredMixin, View):
         else:
             unarchive_student(request.user, student)
             messages.success(request, "O'quvchi qayta faollashtirildi")
+        return redirect('students:detail', pk=pk)
+
+
+class StudentExpelView(AdminRequiredMixin, View):
+    def post(self, request, pk):
+        student = get_object_or_404(Student, pk=pk)
+        if student.status == Student.Status.EXPELLED:
+            unarchive_student(request.user, student)
+            messages.success(request, "O'quvchi qayta faollashtirildi")
+        else:
+            expel_student(request.user, student)
+            messages.success(request, "O'quvchi chetlatildi")
         return redirect('students:detail', pk=pk)
 
 

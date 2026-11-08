@@ -27,19 +27,13 @@
     <a href="{% url 'students:create' %}?group={{ group.pk }}" class="btn btn-sm btn-primary">
       <i class="bi bi-person-plus me-1"></i>+ O'quvchi qo'shish
     </a>
-    <a href="{% url 'students:import_excel' %}?group={{ group.pk }}" class="btn btn-sm btn-success">
-      <i class="bi bi-file-earmark-excel me-1"></i>Exceldan qo'shish
-    </a>
     {% endif %}
 
     {% if user.is_admin %}
     <a href="{% url 'groups:update' group.pk %}" class="btn btn-sm btn-outline-secondary">Tahrirlash</a>
-    {% if group.status == 'open' %}
-    <form method="post" action="{% url 'groups:status_action' group.pk 'close' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-warning">Yopish</button></form>
-    {% else %}
+    {% if group.status == 'archived' %}
     <form method="post" action="{% url 'groups:status_action' group.pk 'reopen' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Qayta ochish</button></form>
-    {% endif %}
-    {% if group.status != 'archived' %}
+    {% else %}
     <form method="post" action="{% url 'groups:status_action' group.pk 'archive' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Arxivlash</button></form>
     {% endif %}
     {% if group.active_student_count == 0 %}
@@ -137,19 +131,12 @@
             <div id="search-results"></div>
           </div>
           <div class="col-md-6 border-start">
-            <h6><i class="bi bi-file-earmark-excel text-success me-1"></i>Excel ro'yxatdan bir urinishda qo'shish</h6>
-            <form method="post" action="{% url 'students:import_excel' %}" enctype="multipart/form-data">
-              {% csrf_token %}
-              <input type="hidden" name="group" value="{{ group.pk }}">
-              <input type="hidden" name="preset_group_id" value="{{ group.pk }}">
-              <div class="mb-2">
-                <input type="file" name="excel_file" accept=".xlsx" class="form-control form-control-sm" required>
-              </div>
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-success">Yuklash va qo'shish</button>
-                <a href="{% url 'students:import_sample' %}" class="btn btn-sm btn-outline-secondary">Namuna (.xlsx)</a>
-              </div>
-            </form>
+            <h6><i class="bi bi-file-earmark-word text-success me-1"></i>Word orqali bir urinishda qo'shish</h6>
+            <p class="small text-muted mb-2">O'quvchilarni jadval ko'rinishida Word (.docx) faylga kiritib, shu yerdan yuklang.</p>
+            <a href="{% url 'students:import_word' %}?group={{ group.pk }}" class="btn btn-sm btn-success">
+              <i class="bi bi-upload me-1"></i>Word fayl yuklash
+            </a>
+            <a href="{% url 'students:import_sample' %}" class="btn btn-sm btn-outline-secondary">Namuna (.docx)</a>
           </div>
         </div>
         {% endif %}

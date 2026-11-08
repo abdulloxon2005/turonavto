@@ -187,24 +187,35 @@ def test_teacher_can_add_student_to_group_but_cannot_remove(teacher_client, teac
 
 
 @pytest.mark.django_db
-def test_bulk_excel_import_adds_multiple_students(teacher_user, group):
+def test_bulk_word_import_adds_multiple_students(teacher_user, group):
     import io
-    from openpyxl import Workbook
+    from docx import Document
     from apps.groups.models import GroupTeacher
-    from apps.students.services import bulk_import_students_from_excel
+    from apps.students.services import bulk_import_students_from_word
 
     GroupTeacher.objects.get_or_create(group=group, user=teacher_user)
-    wb = Workbook()
-    ws = wb.active
-    ws.append(['F.I.Sh', 'Telefon', 'Qo\'shimcha telefon', 'Pasport', 'Tug\'ilgan sana', 'Manzil'])
-    ws.append(['Olimov Sardor', '901234567', '', 'AD1112233', '2003-04-10', 'Toshkent'])
-    ws.append(['Rasulova Dilnoza', '+998937654321', '', 'AC9998877', '2005-08-22', 'Samarqand'])
+    doc = Document()
+    table = doc.add_table(rows=1, cols=6)
+    table.rows[0].cells[0].text = 'F.I.Sh'
+    table.rows[0].cells[1].text = 'Telefon'
+    table.rows[0].cells[2].text = 'Qo\'shimcha telefon'
+    table.rows[0].cells[3].text = 'Pasport'
+    table.rows[0].cells[4].text = 'Tug\'ilgan sana'
+    table.rows[0].cells[5].text = 'Manzil'
+
+    for row_data in (
+        ['Olimov Sardor', '901234567', '', 'AD1112233', '2003-04-10', 'Toshkent'],
+        ['Rasulova Dilnoza', '+998937654321', '', 'AC9998877', '2005-08-22', 'Samarqand'],
+    ):
+        cells = table.add_row().cells
+        for i, value in enumerate(row_data):
+            cells[i].text = value
 
     buf = io.BytesIO()
-    wb.save(buf)
+    doc.save(buf)
     buf.seek(0)
 
-    created, errors = bulk_import_students_from_excel(teacher_user, buf, group)
+    created, errors = bulk_import_students_from_word(teacher_user, buf, group)
     assert len(created) == 2
     assert errors == []
     assert all(s.brought_by_user_id == teacher_user for s in created)
@@ -219,7 +230,7 @@ def test_my_brought_students_view_learning_and_payment_statuses(teacher_client, 
     assert len(response.context['items']) == 1
     item = response.context['items'][0]
     assert item['student'] == student
-    assert item['payment_status'] == 'unpaid'
+    assert item['payment_status'] == 'debtor'
 
 
 @pytest.mark.django_db

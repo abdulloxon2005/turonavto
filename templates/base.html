@@ -29,11 +29,8 @@
       <a class="nav-link {% if app_name == 'groups' %}active{% endif %}" href="{% url 'groups:list' %}">
         <i class="bi bi-people"></i> {% if user.role != 'admin' %}Guruhlarim{% else %}Guruhlar{% endif %}
       </a>
-      <a class="nav-link {% if app_name == 'students' and url_name != 'delete_requests' and url_name != 'my_brought' %}active{% endif %}" href="{% url 'students:list' %}">
+      <a class="nav-link {% if app_name == 'students' and url_name != 'delete_requests' %}active{% endif %}" href="{% url 'students:list' %}">
         <i class="bi bi-person-badge"></i> O'quvchilar
-      </a>
-      <a class="nav-link {% if url_name == 'my_brought' %}active{% endif %}" href="{% url 'students:my_brought' %}">
-        <i class="bi bi-person-check"></i> Olib kelgan o'quvchilarim
       </a>
       {% if user.role != 'instructor' %}
       <a class="nav-link {% if url_name == 'debtors' %}active{% endif %}" href="{% url 'payments:debtors' %}">
@@ -41,9 +38,6 @@
       </a>
       {% endif %}
       {% if user.role == 'admin' %}
-      <a class="nav-link {% if url_name == 'cash_list' or url_name == 'cash_create' or url_name == 'cash_detail' %}active{% endif %}" href="{% url 'payments:cash_list' %}">
-        <i class="bi bi-wallet2"></i> Kassa
-      </a>
       <a class="nav-link {% if app_name == 'lessons' %}active{% endif %}" href="{% url 'lessons:list' %}">
         <i class="bi bi-car-front"></i> Amaliyot
       </a>
@@ -60,14 +54,8 @@
       <a class="nav-link {% if app_name == 'accounts' and url_name != 'change_password' %}active{% endif %}" href="{% url 'accounts:staff_list' %}">
         <i class="bi bi-person-gear"></i> Hodimlar
       </a>
-      <a class="nav-link {% if url_name == 'delete_requests' %}active{% endif %}" href="{% url 'students:delete_requests' %}">
-        <i class="bi bi-inbox"></i> So'rovlar
-      </a>
       <a class="nav-link {% if app_name == 'reports' %}active{% endif %}" href="{% url 'reports:index' %}">
         <i class="bi bi-bar-chart-line"></i> Hisobotlar
-      </a>
-      <a class="nav-link {% if app_name == 'expenses' %}active{% endif %}" href="{% url 'expenses:list' %}">
-        <i class="bi bi-cash-stack"></i> Xarajatlar
       </a>
 
       <div class="sidebar-heading">Tizim</div>

@@ -1,9 +1,10 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.core.validators import RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 
 from apps.core.models import TimeStampedModel
+from apps.core.validators import validate_image_size
 
 from .managers import UserManager
 
@@ -11,6 +12,10 @@ phone_validator = RegexValidator(
     regex=r'^\+?\d{9,15}$',
     message="Telefon raqami faqat raqamlardan iborat bo'lishi kerak, masalan +998901234567",
 )
+
+
+def staff_photo_path(instance, filename):
+    return f'staff/{instance.pk or "new"}/{filename}'
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
@@ -22,6 +27,12 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, unique=True, validators=[phone_validator])
     role = models.CharField(max_length=20, choices=Role.choices)
+    photo = models.ImageField(
+        upload_to=staff_photo_path,
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png']), validate_image_size],
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     must_change_password = models.BooleanField(default=True)

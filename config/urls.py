@@ -12,6 +12,7 @@ urlpatterns = [
     path('oquvchilar/', include('apps.students.urls')),
     path('tolovlar/', include('apps.payments.urls')),
     path('amaliyot/', include('apps.lessons.urls')),
+    path('imtihonlar/', include('apps.exams.urls')),
     path('xarajatlar/', include('apps.expenses.urls')),
     path('hisobotlar/', include('apps.reports.urls')),
     path('sozlamalar/', include('apps.site_settings.urls')),

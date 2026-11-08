@@ -8,8 +8,8 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="card-title mb-0">{% if student %}O'quvchini tahrirlash{% else %}Yangi o'quvchi qo'shish{% endif %}</h5>
           {% if not student %}
-          <a href="{% url 'students:import_excel' %}{% if preset_group_id %}?group={{ preset_group_id }}{% endif %}" class="btn btn-sm btn-outline-success">
-            <i class="bi bi-file-earmark-excel me-1"></i>Excel orqali ko'plab qo'shish
+          <a href="{% url 'students:import_word' %}{% if preset_group_id %}?group={{ preset_group_id }}{% endif %}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-word me-1"></i>Word orqali ko'plab qo'shish
           </a>
           {% endif %}
         </div>
@@ -40,11 +40,6 @@
             <div class="col-md-6">
               <label class="form-label">Qo'shimcha telefon</label>
               {{ form.phone2 }}
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Pasport raqami</label>
-              {{ form.passport_no }}
-              {% for e in form.passport_no.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
             </div>
             <div class="col-md-6">
               <label class="form-label">Rasm</label>
