@@ -280,9 +280,16 @@ class DebtorsListView(AdminOrTeacherRequiredMixin, View):
     template_name = 'payments/debtors_list.html'
 
     def get(self, request):
+        from .models import PaymentSchedule
+
         debtors = debtors_queryset(request.user)
         debtors.sort(key=lambda s: s['debt'], reverse=True)
-        return render(request, self.template_name, {'debtors': debtors})
+
+        include_partial = request.GET.get('include_partial') == '1'
+        if not include_partial:
+            debtors = [d for d in debtors if d['status'] != PaymentSchedule.Status.PARTIAL]
+
+        return render(request, self.template_name, {'debtors': debtors, 'include_partial': include_partial})
 
 
 class CashClosingListView(AdminRequiredMixin, View):

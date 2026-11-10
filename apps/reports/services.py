@@ -124,6 +124,66 @@ def upcoming_revenue_report(days=30):
     return {'items': items.order_by('due_date'), 'total': total}
 
 
+def dashboard_overview():
+    """Hisobotlar bosh sahifasi uchun umumiy ko'rsatkichlar (faol/yopilgan/yopilmagan/jami qarz)."""
+    from apps.students.models import Student
+    from apps.students.services import student_enriched_info
+
+    open_count = 0
+    closed_count = 0
+    total_outstanding = 0
+    for student in Student.objects.filter(status=Student.Status.ACTIVE):
+        info = student_enriched_info(student)
+        if info['total_due'] <= 0:
+            continue
+        if info['debt'] > 0:
+            open_count += 1
+            total_outstanding += info['debt']
+        else:
+            closed_count += 1
+
+    return {
+        'active_count': open_count + closed_count,
+        'open_count': open_count,
+        'closed_count': closed_count,
+        'total_outstanding': total_outstanding,
+    }
+
+
+def staff_comparison_chart_data(limit=8):
+    """Har bir hodim (egasi) bo'yicha faol o'quvchilar soni va qolgan qarzi (eng qarzdor hodimlar birinchi)."""
+    rows = [r for r in staff_report() if r['students_count'] or r['debt']]
+    rows.sort(key=lambda r: r['debt'], reverse=True)
+    rows = rows[:limit]
+    return {
+        'labels': [r['user'].full_name for r in rows],
+        'active_counts': [r['students_count'] for r in rows],
+        'debts': [r['debt'] for r in rows],
+    }
+
+
+def risk_distribution_chart_data():
+    """Qarzdorlarni kechikish kunlari bo'yicha risk toifalariga ajratadi."""
+    buckets = [
+        ('0-30 kun', 0),
+        ('30+ kun', 0),
+        ('60+ kun', 0),
+        ("90+ kun (sud)", 0),
+    ]
+    counts = dict(buckets)
+    for row in debtors_report():
+        days = row['overdue_days']
+        if days >= 90:
+            counts["90+ kun (sud)"] += 1
+        elif days >= 60:
+            counts['60+ kun'] += 1
+        elif days >= 30:
+            counts['30+ kun'] += 1
+        else:
+            counts['0-30 kun'] += 1
+    return counts
+
+
 def cash_report(date_from, date_to):
     qs = CashClosing.objects.filter(date__gte=date_from, date__lte=date_to).select_related('user')
     total_expected = qs.aggregate(s=Sum('expected_amount'))['s'] or 0

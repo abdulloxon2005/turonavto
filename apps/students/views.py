@@ -23,6 +23,7 @@ from .services import (
     expel_student,
     find_duplicates,
     generate_student_import_sample_docx,
+    payment_breakdown,
     student_enriched_info,
     unarchive_student,
     unassign_instructor,
@@ -43,6 +44,11 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
     template_name = 'students/student_list.html'
     context_object_name = 'students'
     paginate_by = 25
+
+    def get_template_names(self):
+        if self.request.headers.get('HX-Request') == 'true':
+            return ['students/_student_results.html']
+        return [self.template_name]
 
     def get_queryset(self):
         qs = visible_students_queryset(self.request.user).select_related('brought_by_user_id')
@@ -97,9 +103,7 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
             'total': len(all_enriched),
             'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
             'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
-            'debtors_count': sum(1 for item in all_enriched if item['payment_status'] == 'debtor'),
-            'total_paid': sum(item['paid'] for item in all_enriched),
-            'total_debt': sum(item['debt'] for item in all_enriched),
+            **payment_breakdown(all_enriched),
         }
         context['learning_filter'] = self.request.GET.get('learning_status', '').strip()
         context['payment_filter'] = self.request.GET.get('payment_status', '').strip()
@@ -141,8 +145,7 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
             'total': len(all_enriched),
             'studying': sum(1 for item in all_enriched if item['learning_status'] == 'studying'),
             'finished': sum(1 for item in all_enriched if item['learning_status'] == 'finished'),
-            'total_paid': sum(item['paid'] for item in all_enriched),
-            'total_debt': sum(item['debt'] for item in all_enriched),
+            **payment_breakdown(all_enriched),
         }
 
         items = [student_enriched_info(s) for s in qs.distinct()]
@@ -169,7 +172,12 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
             'payment_filter': payment_filter,
             'group_options': group_options,
         }
-        return render(request, self.template_name, context)
+        template_name = (
+            'students/_my_brought_results.html'
+            if request.headers.get('HX-Request') == 'true'
+            else self.template_name
+        )
+        return render(request, template_name, context)
 
 
 class StudentCreateView(AdminOrTeacherRequiredMixin, View):

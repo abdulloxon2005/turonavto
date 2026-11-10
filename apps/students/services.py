@@ -292,8 +292,9 @@ def decide_delete_request(actor, delete_request, approve, note=''):
 def student_enriched_info(student):
     """O'quvchining guruhi, o'qish holati (studying/finished) va to'lov holatini qaytaradi.
 
-    To'lov holati faqat 3 ta qiymatdan biri bo'ladi: paid, partial, debtor.
-    O'qishni tugatib, to'lovi 100% bo'lmagan o'quvchi har doim 'debtor' hisoblanadi.
+    To'lov holati 4 ta qiymatdan biri bo'ladi: paid, partial, unpaid, debtor.
+    O'qish davomida (hali tugamagan) qarz bo'lishi normal holat - 'debtor' deb hisoblanmaydi.
+    Faqat o'qishni tugatib, to'lovi 100% bo'lmagan o'quvchi 'debtor' (qarzdor) hisoblanadi.
     """
     from apps.payments.services import student_debt_summary
 
@@ -339,7 +340,7 @@ def student_enriched_info(student):
     elif paid > 0:
         payment_status = 'partial'
     else:
-        payment_status = 'debtor'
+        payment_status = 'unpaid'
 
     return {
         'student': student,
@@ -350,6 +351,27 @@ def student_enriched_info(student):
         'paid': paid,
         'debt': debt,
         'payment_status': payment_status,
+    }
+
+
+def payment_breakdown(enriched_list):
+    """To'lov holati bo'yicha (paid/partial/unpaid/debtor) o'quvchilar soni va summalarini hisoblaydi.
+
+    Har bir indikator shu yerdagi son/summa ustidan ?payment_status=<key> filtriga mos keladi.
+    """
+    buckets = {'paid': [], 'partial': [], 'unpaid': [], 'debtor': []}
+    for item in enriched_list:
+        buckets.setdefault(item['payment_status'], []).append(item)
+
+    return {
+        'paid_count': len(buckets['paid']),
+        'paid_sum': sum(i['paid'] for i in buckets['paid']),
+        'partial_count': len(buckets['partial']),
+        'partial_sum': sum(i['paid'] for i in buckets['partial']),
+        'unpaid_count': len(buckets['unpaid']),
+        'unpaid_sum': sum(i['debt'] for i in buckets['unpaid']),
+        'debtor_count': len(buckets['debtor']),
+        'debtor_sum': sum(i['debt'] for i in buckets['debtor']),
     }
 
 

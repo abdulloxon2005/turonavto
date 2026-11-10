@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Nazariy darslar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Nazariy darslar</h4>
+  <a href="{% url 'lessons:theory_create' %}" class="btn btn-primary btn-sm">+ Dars qo'shish</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  {% if group_options %}
+  <div class="col-auto">
+    <select name="group" class="form-select" onchange="this.form.submit()">
+      <option value="">Barcha guruhlar</option>
+      {% for g in group_options %}<option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }} ({{ g.category }})</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+</form>
+
+{% for l in theory_lessons %}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h6 class="mb-1">
+          <a href="{% url 'groups:detail' l.group.pk %}">{{ l.group.name }}</a> ({{ l.group.category }})
+          {% if l.topic %}<span class="text-muted">— {{ l.topic }}</span>{% endif %}
+        </h6>
+        <div class="small text-muted">{{ l.lesson_date }} {{ l.start_time }} · {{ l.teacher.full_name }} · {{ l.hours }} soat</div>
+      </div>
+    </div>
+    <div class="table-responsive mt-2">
+      <table class="table table-sm mb-0">
+        <thead><tr><th>O'quvchi</th><th>Qatnashdi</th></tr></thead>
+        <tbody>
+          {% for a in l.attendance_list %}
+          <tr>
+            <td><a href="{% url 'students:detail' a.student.pk %}">{{ a.student.full_name }}</a></td>
+            <td>
+              {% if a.attended == True %}<span class="badge bg-success">Ha</span>
+              {% elif a.attended == False %}<span class="badge bg-danger">Yo'q</span>
+              {% else %}
+                <form method="post" action="{% url 'lessons:theory_attendance' a.pk 'yes' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-success">Ha</button></form>
+                <form method="post" action="{% url 'lessons:theory_attendance' a.pk 'no' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger">Yo'q</button></form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="text-muted text-center">Guruhda o'quvchi yo'q</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% empty %}
+<p class="text-muted text-center py-4">Nazariy darslar yo'q</p>
+{% endfor %}
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

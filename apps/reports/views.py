@@ -12,9 +12,12 @@ from apps.payments.models import Payment
 from .exporters import export_pdf, export_xlsx
 from .services import (
     cash_report,
+    dashboard_overview,
     debtors_report,
     groups_report,
+    risk_distribution_chart_data,
     revenue_report,
+    staff_comparison_chart_data,
     staff_report,
     upcoming_revenue_report,
 )
@@ -39,7 +42,23 @@ class ReportsIndexView(AdminRequiredMixin, View):
     template_name = 'reports/index.html'
 
     def get(self, request):
-        return render(request, self.template_name)
+        import json
+
+        overview = dashboard_overview()
+        staff_chart = staff_comparison_chart_data()
+        risk_chart = risk_distribution_chart_data()
+
+        chart_data = {
+            'staffLabels': staff_chart['labels'],
+            'staffActiveCounts': staff_chart['active_counts'],
+            'staffDebts': staff_chart['debts'],
+            'riskLabels': list(risk_chart.keys()),
+            'riskValues': list(risk_chart.values()),
+        }
+        return render(request, self.template_name, {
+            'overview': overview,
+            'chart_data': json.dumps(chart_data),
+        })
 
 
 class RevenueReportView(AdminRequiredMixin, View):

@@ -167,7 +167,7 @@ STORAGES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'data' / 'uploads'
 
-MAX_UPLOAD_IMAGE_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_UPLOAD_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_UPLOAD_IMAGE_TYPES = ['image/jpeg', 'image/png']
 
 BACKUP_DIR = Path(config('BACKUP_DIR', default=str(BASE_DIR / 'backups')))

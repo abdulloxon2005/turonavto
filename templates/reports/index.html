@@ -1,7 +1,77 @@
 {% extends 'base.html' %}
+{% load core_extras %}
 {% block title %}Hisobotlar{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
 <h4 class="mb-4">Hisobotlar</h4>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card card-body h-100 border-start border-4 border-primary">
+      <small class="text-muted">Faol mijozlar</small>
+      <strong class="fs-4 mt-1">{{ overview.active_count }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-body h-100 border-start border-4 border-danger">
+      <small class="text-muted">Yopilmagan</small>
+      <strong class="fs-4 mt-1 text-danger">{{ overview.open_count }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-body h-100 border-start border-4 border-success">
+      <small class="text-muted">Yopilgan</small>
+      <strong class="fs-4 mt-1 text-success">{{ overview.closed_count }}</strong>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card card-body h-100 border-start border-4 border-warning">
+      <small class="text-muted">Jami to'lash kerak bo'lgan summa</small>
+      <strong class="fs-5 mt-1">{{ overview.total_outstanding|money }}</strong>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Hodimlar bo'yicha faol o'quvchilar soni</small>
+      <canvas id="staffActiveChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Hodimlar bo'yicha qolgan qarz</small>
+      <canvas id="staffDebtChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-5">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Qarzdorlik darajalari bo'yicha taqsimot (kechikish kunlari)</small>
+      <canvas id="riskChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card card-body h-100">
+      <small class="text-muted mb-2">Izoh</small>
+      <ul class="small text-muted mb-0">
+        <li><strong>0-30 kun</strong> — muddati yaqinda o'tgan, odatiy holat.</li>
+        <li><strong>30+ kun</strong> — e'tibor talab qiladi.</li>
+        <li><strong>60+ kun</strong> — jiddiy kechikish, bog'lanish kerak.</li>
+        <li><strong>90+ kun (sud)</strong> — yuqori risk, qo'shimcha chora ko'rish lozim.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h5 class="mb-3">Batafsil hisobotlar</h5>
 <div class="row g-3">
   <div class="col-md-4"><div class="card card-body">
     <h6>Tushum</h6>
@@ -29,4 +99,64 @@
     <a href="{% url 'reports:exam_results' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
   </div></div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ chart_data|json_script:"reports-chart-data" }}
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById('reports-chart-data').textContent);
+  const palette = {
+    active: '#2563eb',
+    debt: '#f97316',
+    risk: ['#22c55e', '#eab308', '#f97316', '#1e293b'],
+  };
+
+  if (data.staffLabels.length) {
+    new Chart(document.getElementById('staffActiveChart'), {
+      type: 'bar',
+      data: {
+        labels: data.staffLabels,
+        datasets: [{ label: 'Faol o\'quvchilar', data: data.staffActiveCounts, backgroundColor: palette.active, borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+
+    new Chart(document.getElementById('staffDebtChart'), {
+      type: 'bar',
+      data: {
+        labels: data.staffLabels,
+        datasets: [{ label: 'Qolgan qarz', data: data.staffDebts, backgroundColor: palette.debt, borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } },
+      },
+    });
+  } else {
+    document.getElementById('staffActiveChart').replaceWith(
+      Object.assign(document.createElement('p'), { className: 'text-muted small mb-0', textContent: "Ma'lumot yo'q" })
+    );
+    document.getElementById('staffDebtChart').replaceWith(
+      Object.assign(document.createElement('p'), { className: 'text-muted small mb-0', textContent: "Ma'lumot yo'q" })
+    );
+  }
+
+  new Chart(document.getElementById('riskChart'), {
+    type: 'doughnut',
+    data: {
+      labels: data.riskLabels,
+      datasets: [{ data: data.riskValues, backgroundColor: palette.risk }],
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+  });
+})();
+</script>
 {% endblock %}

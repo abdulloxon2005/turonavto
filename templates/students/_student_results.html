@@ -1,0 +1,165 @@
+{% load core_extras %}
+{% if stats %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{% url 'students:list' %}" hx-get="{% url 'students:list' %}" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if not learning_filter and not payment_filter %}border-primary border-2{% endif %}">
+        <small class="text-muted">Jami o'quvchilar</small>
+        <strong class="fs-4 text-dark">{{ stats.total }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?learning_status=studying" hx-get="?learning_status=studying" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if learning_filter == 'studying' %}border-primary border-2{% endif %}">
+        <small class="text-muted">O'qimoqda</small>
+        <strong class="fs-4 text-primary">{{ stats.studying }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?learning_status=finished" hx-get="?learning_status=finished" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if learning_filter == 'finished' %}border-success border-2{% endif %}">
+        <small class="text-muted">Tugatdi</small>
+        <strong class="fs-4 text-success">{{ stats.finished }} ta</strong>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=paid" hx-get="?payment_status=paid" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'paid' %}border-success border-2{% endif %}">
+        <small class="text-muted">To'liq to'langan</small>
+        <strong class="fs-4 text-success">{{ stats.paid_count }} ta</strong>
+        <small class="text-success">{{ stats.paid_sum|money }}</small>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=partial" hx-get="?payment_status=partial" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'partial' %}border-warning border-2{% endif %}">
+        <small class="text-muted">Qisman to'lov qilgan</small>
+        <strong class="fs-4" style="color:#b8860b">{{ stats.partial_count }} ta</strong>
+        <small style="color:#b8860b">{{ stats.partial_sum|money }}</small>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=unpaid" hx-get="?payment_status=unpaid" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'unpaid' %}border-secondary border-2{% endif %}">
+        <small class="text-muted">To'lanmagan</small>
+        <strong class="fs-4 text-secondary">{{ stats.unpaid_count }} ta</strong>
+        <small class="text-secondary">{{ stats.unpaid_sum|money }}</small>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="?payment_status=debtor" hx-get="?payment_status=debtor" hx-target="#student-results" hx-push-url="true" class="text-decoration-none">
+      <div class="card card-body h-100 {% if payment_filter == 'debtor' %}border-danger border-2{% endif %}">
+        <small class="text-muted">Jami qarzdorlik</small>
+        <strong class="fs-4 text-danger">{{ stats.debtor_count }} ta</strong>
+        <small class="text-danger">{{ stats.debtor_sum|money }}</small>
+      </div>
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="table-responsive bg-white rounded shadow-sm">
+  <table class="table table-hover align-middle mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>O'quvchi ma'lumotlari</th>
+        <th>Guruh (Toifa)</th>
+        <th>O'qish holati</th>
+        <th>Kurs narxi</th>
+        <th>To'langan</th>
+        <th>Qolgan summa</th>
+        <th>To'lov holati</th>
+        <th>Kim olib kelgan</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td class="text-muted">{{ forloop.counter }}</td>
+        <td>
+          <a href="{% url 'students:detail' s.pk %}" class="fw-semibold text-decoration-none {% if s.status == 'expelled' %}text-danger{% endif %}">{{ s.full_name }}</a>
+          {% if s.status == 'expelled' %}<span class="badge bg-danger ms-1">Chetlatilgan</span>{% endif %}
+          <div class="small text-muted">
+            {% if s.passport_no %}Pasport: {{ s.passport_no }} · {% endif %}
+            {% if s.birth_date %}{{ s.birth_date }} · {% endif %}
+            {% if s.address %}{{ s.address }}{% endif %}
+          </div>
+        </td>
+        <td>
+          {% if s.enriched.group %}
+          <a href="{% url 'groups:detail' s.enriched.group.pk %}" class="fw-semibold text-decoration-none">
+            {{ s.enriched.group.name }}
+          </a>
+          <span class="badge bg-dark ms-1">{{ s.enriched.group.category }}</span>
+          <div class="small text-muted">
+            {{ s.enriched.group.start_date }}{% if s.enriched.group.end_date %} — {{ s.enriched.group.end_date }}{% endif %}
+          </div>
+          {% else %}
+          <span class="text-muted">Guruhga biriktirilmagan</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge {{ s.enriched.learning_status|status_badge }}">
+            {{ s.enriched.learning_status|status_label }}
+          </span>
+        </td>
+        <td>{{ s.enriched.total_due|money }}</td>
+        <td class="text-success fw-semibold">{{ s.enriched.paid|money }}</td>
+        <td class="{% if s.enriched.debt > 0 %}{% if s.enriched.learning_status == 'finished' %}text-danger fw-semibold{% else %}fw-semibold{% endif %}{% else %}text-muted{% endif %}">
+          {{ s.enriched.debt|money }}
+        </td>
+        <td>
+          <span class="badge {{ s.enriched.payment_status|status_badge }}">
+            {{ s.enriched.payment_status|status_label }}
+          </span>
+        </td>
+        <td>
+          {% if s.brought_by_user_id_id == user.id %}
+          <span class="badge bg-info text-dark">Men olib kelganman</span>
+          {% else %}
+          {{ s.brought_by_user_id.full_name }}
+          {% endif %}
+        </td>
+        <td class="text-end text-nowrap">
+          {% if s.can_collect and s.enriched.debt > 0 %}
+          <a href="{% url 'payments:payment_create' s.pk %}" class="btn btn-sm btn-success">To'lov</a>
+          {% endif %}
+          <a href="{% url 'students:detail' s.pk %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="10" class="text-muted text-center py-4">O'quvchilar topilmadi</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<nav class="mt-3">
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+         hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+         hx-target="#student-results" hx-push-url="true">Oldingi</a>
+    </li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+         hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+         hx-target="#student-results" hx-push-url="true">Keyingi</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
