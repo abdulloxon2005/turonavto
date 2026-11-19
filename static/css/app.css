@@ -262,3 +262,6 @@ body {
 /* Real-time filtr */
 form.live-ready .live-submit { display: none; }
 .live-loading { opacity: .55; transition: opacity .15s; pointer-events: none; }
+
+/* Bosh sahifa diagrammasi */
+.chart-box { position: relative; height: 280px; }

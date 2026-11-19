@@ -19,11 +19,43 @@
   <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Jami qarzdorlik</small><strong class="fs-5 text-danger">{{ admin_stats.total_debt|money }}</strong></div></div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-6 col-lg-4">
+<div class="row g-3 mb-4 align-items-stretch">
+  <div class="col-lg-5 col-xl-4">
     <div class="card card-body h-100">
       <small class="text-muted mb-2">To'langan / To'lanmagan</small>
-      <canvas id="debtChart" height="220"></canvas>
+      <div class="chart-box"><canvas id="debtChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-7 col-xl-8">
+    <div class="row g-3 h-100">
+      <div class="col-sm-6">
+        <div class="card h-100"><div class="card-body d-flex flex-column">
+          <h6 class="card-title">Hodimlar</h6>
+          <p class="text-muted small flex-grow-1">O'qituvchi va instruktorlarni boshqarish</p>
+          <div><a href="{% url 'accounts:staff_list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a></div>
+        </div></div>
+      </div>
+      <div class="col-sm-6">
+        <div class="card h-100"><div class="card-body d-flex flex-column">
+          <h6 class="card-title">Hisobotlar</h6>
+          <p class="text-muted small flex-grow-1">Tushum, guruh, hodim va qarzdorlar hisobotlari</p>
+          <div><a href="{% url 'reports:index' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a></div>
+        </div></div>
+      </div>
+      <div class="col-sm-6">
+        <div class="card h-100"><div class="card-body d-flex flex-column">
+          <h6 class="card-title">Qarzdorlar</h6>
+          <p class="text-muted small flex-grow-1">Qarzdor o'quvchilar ro'yxati</p>
+          <div><a href="{% url 'payments:debtors' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a></div>
+        </div></div>
+      </div>
+      <div class="col-sm-6">
+        <div class="card h-100"><div class="card-body d-flex flex-column">
+          <h6 class="card-title">Xabarnomalar</h6>
+          <p class="text-muted small flex-grow-1">Tizim ichidagi bildirishnomalar</p>
+          <div><a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a></div>
+        </div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -111,28 +143,8 @@
 </div>
 {% endif %}
 
+{% if role != 'admin' %}
 <div class="row g-3">
-  {% if role == 'admin' %}
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Hodimlar</h6>
-        <p class="text-muted small">O'qituvchi va instruktorlarni boshqarish</p>
-        <a href="{% url 'accounts:staff_list' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card">
-      <div class="card-body">
-        <h6 class="card-title">Hisobotlar</h6>
-        <p class="text-muted small">Tushum, guruh, hodim va qarzdorlar hisobotlari</p>
-        <a href="{% url 'reports:index' %}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
   {% if role == 'teacher' or role == 'instructor' %}
   <div class="col-md-4">
     <div class="card">
@@ -154,7 +166,7 @@
   </div>
   {% endif %}
 
-  {% if role != 'instructor' %}
+  {% if role == 'teacher' %}
   <div class="col-md-4">
     <div class="card">
       <div class="card-body">
@@ -166,7 +178,7 @@
   </div>
   {% endif %}
 
-  {% if role != 'instructor' %}
+  {% if role == 'teacher' %}
   <div class="col-md-4">
     <div class="card">
       <div class="card-body">
@@ -178,6 +190,7 @@
   </div>
   {% endif %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -193,7 +206,7 @@
       labels: ["To'langan", "To'lanmagan"],
       datasets: [{ data: [data.debtPaid, data.debtRemaining], backgroundColor: ['#22c55e', '#9ca3af'] }],
     },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } },
   });
 })();
 </script>
