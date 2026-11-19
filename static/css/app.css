@@ -258,3 +258,7 @@ body {
         align-items: center;
     }
 }
+
+/* Real-time filtr */
+form.live-ready .live-submit { display: none; }
+.live-loading { opacity: .55; transition: opacity .15s; pointer-events: none; }

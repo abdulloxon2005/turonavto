@@ -1,7 +1,8 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.contrib.auth.decorators import login_required
+from django.urls import include, path, re_path
+from django.views.static import serve
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,4 +19,13 @@ urlpatterns = [
     path('sozlamalar/', include('apps.site_settings.urls')),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Yuklangan fayllar (hodim/o'quvchi rasmlari). `static()` faqat DEBUG=True da ishlaydi, shuning uchun
+# DEBUG=False bo'lganda rasmlar chiqmay qolardi. Production'da nginx `/media/` ni o'zi beradi (Django'ga
+# yetib kelmaydi); nginx'siz ishga tushirilganda esa bu yo'l faqat tizimga kirgan foydalanuvchilarga beradi.
+urlpatterns += [
+    re_path(
+        r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
+        login_required(serve),
+        {'document_root': settings.MEDIA_ROOT},
+    ),
+]

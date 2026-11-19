@@ -1,7 +1,7 @@
 <div class="list-group">
   {% for s in results %}
   <div class="list-group-item d-flex justify-content-between align-items-center">
-    <span>{{ s.full_name }} ({{ s.phone }})</span>
+    <span>{{ s.full_name }}</span>
     <form method="post" action="{% url 'groups:student_add' group.pk %}">
       {% csrf_token %}
       <input type="hidden" name="student_id" value="{{ s.pk }}">

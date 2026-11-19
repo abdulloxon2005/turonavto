@@ -8,7 +8,7 @@ from .models import Expense
 class ExpenseForm(forms.Form):
     category = forms.ChoiceField(label='Turi', choices=Expense.Category.choices)
     amount = forms.IntegerField(label='Summa', min_value=1)
-    expense_date = forms.DateField(label='Sana', widget=forms.DateInput(attrs={'type': 'date'}))
+    expense_date = forms.DateField(label='Sana', widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
     description = forms.CharField(label='Izoh', max_length=255)
     paid_to_user = forms.ModelChoiceField(
         label='Xodim (agar bo\'lsa)', queryset=User.objects.exclude(role=User.Role.ADMIN),
@@ -35,8 +35,8 @@ class ExpenseFilterForm(forms.Form):
     paid_to_user = forms.ModelChoiceField(
         label='Xodim', queryset=User.objects.exclude(role=User.Role.ADMIN), required=False,
     )
-    date_from = forms.DateField(label='Sanadan', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
-    date_to = forms.DateField(label='Sanagacha', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    date_from = forms.DateField(label='Sanadan', required=False, widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
+    date_to = forms.DateField(label='Sanagacha', required=False, widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -42,3 +42,29 @@ def test_can_delete_empty_group(admin_user):
     )
     delete_group(admin_user, empty_group)
     assert not Group.objects.filter(pk=empty_group.pk).exists()
+
+
+@pytest.mark.django_db
+def test_group_pages_do_not_show_student_phones(
+    admin_user, teacher_user, instructor_user, group, student,
+):
+    from django.test import Client
+    from django.urls import reverse
+
+    from apps.groups.models import GroupInstructor
+
+    GroupInstructor.objects.get_or_create(group=group, user=instructor_user)
+    clients = {}
+    for user in (admin_user, teacher_user, instructor_user):
+        c = Client()
+        c.force_login(user)
+        clients[user.role] = c
+    for c in clients.values():
+        html = c.get(reverse('groups:detail', args=[group.pk])).content.decode()
+        assert student.full_name in html
+        assert student.phone not in html
+    url = reverse('groups:student_search', args=[group.pk])
+    for role in ('admin', 'teacher'):
+        assert student.phone not in clients[role].get(url, {'q': 'Test'}).content.decode()
+        # telefon bo'yicha qidirish ham yopilgan (raqam oshkor bo'lmasligi uchun)
+        assert 'Topilmadi' in clients[role].get(url, {'q': student.phone}).content.decode()

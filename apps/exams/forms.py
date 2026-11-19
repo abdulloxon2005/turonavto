@@ -9,7 +9,7 @@ class ExamAttemptForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select form-select-sm'}),
     )
     exam_date = forms.DateField(
-        label='Sana', widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
+        label='Sana', widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control form-control-sm'}),
     )
     passed = forms.ChoiceField(
         label='Natija', choices=[('1', "O'tdi"), ('0', "O'tmadi")],

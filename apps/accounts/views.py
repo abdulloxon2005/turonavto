@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -118,7 +119,13 @@ class StaffListView(AdminRequiredMixin, ListView):
         qs = User.objects.exclude(role=User.Role.ADMIN)
         q = self.request.GET.get('q', '').strip()
         if q:
-            qs = qs.filter(full_name__icontains=q) | qs.filter(phone__icontains=q)
+            qs = qs.filter(Q(full_name__icontains=q) | Q(phone__icontains=q))
+        role = self.request.GET.get('role', '').strip()
+        if role in (User.Role.TEACHER, User.Role.INSTRUCTOR):
+            qs = qs.filter(role=role)
+        active = self.request.GET.get('active', '').strip()
+        if active in ('0', '1'):
+            qs = qs.filter(is_active=(active == '1'))
         return qs.order_by('full_name')
 
 

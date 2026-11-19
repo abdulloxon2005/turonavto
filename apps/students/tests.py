@@ -230,7 +230,8 @@ def test_my_brought_students_view_learning_and_payment_statuses(teacher_client, 
     assert len(response.context['items']) == 1
     item = response.context['items'][0]
     assert item['student'] == student
-    assert item['payment_status'] == 'debtor'
+    # O'qish davom etayotgan guruhda to'lanmagan qarz 'debtor' emas, 'unpaid' hisoblanadi
+    assert item['payment_status'] == 'unpaid'
 
 
 @pytest.mark.django_db
@@ -261,6 +262,7 @@ def test_instructor_dashboard_and_students_list_show_student_info(
     assert list_resp.status_code == 200
     assert own_student in list_resp.context['students']
     assert list_resp.context['stats']['total'] == 1
-    assert list_resp.context['stats']['debtors_count'] == 1
+    assert list_resp.context['stats']['unpaid_count'] == 1
+    assert list_resp.context['stats']['debtor_count'] == 0
 
 

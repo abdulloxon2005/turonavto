@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load core_extras %}
 {% block title %}Faoliyat jurnali{% endblock %}
 {% block content %}
 <h4 class="mb-3">Faoliyat jurnali</h4>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3 align-items-end" data-live-filter>
   <div class="col-auto">
     <select name="user" class="form-select">
       <option value="">Barcha foydalanuvchilar</option>
@@ -22,9 +23,13 @@
       {% for t in entity_types %}<option value="{{ t }}" {% if request.GET.entity_type == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto"><input type="date" name="date_from" class="form-control" title="Sanadan" value="{{ request.GET.date_from }}"></div>
+  <div class="col-auto"><input type="date" name="date_to" class="form-control" title="Sanagacha" value="{{ request.GET.date_to }}"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary live-submit">Filtr</button></div>
+  <div class="col-auto"><a href="{% url 'core:audit_log' %}" class="btn btn-link text-secondary" data-live-clear>Tozalash</a></div>
 </form>
 
+<div id="live-results">
 <table class="table table-sm bg-white">
   <thead><tr><th>Vaqt</th><th>Foydalanuvchi</th><th>Amal</th><th>Obyekt</th><th>Eski qiymat</th><th>Yangi qiymat</th><th>IP</th></tr></thead>
   <tbody>
@@ -34,8 +39,8 @@
       <td class="small">{{ log.user.full_name|default:'—' }}</td>
       <td class="small">{{ log.action }}</td>
       <td class="small">{{ log.entity_type }}:{{ log.entity_id }}</td>
-      <td class="small">{{ log.old_value|default:'—' }}</td>
-      <td class="small">{{ log.new_value|default:'—' }}</td>
+      <td class="small">{{ log.old_value|default:'—'|pretty_dates }}</td>
+      <td class="small">{{ log.new_value|default:'—'|pretty_dates }}</td>
       <td class="small">{{ log.ip|default:'—' }}</td>
     </tr>
     {% empty %}
@@ -44,13 +49,6 @@
   </tbody>
 </table>
 
-{% if is_paginated %}
-<nav>
-  <ul class="pagination">
-    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
-    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+{% include 'partials/pagination.html' %}
+</div>
 {% endblock %}

@@ -35,7 +35,7 @@ class EnrollmentForm(BootstrapFieldsMixin, forms.Form):
 
 class ScheduleItemForm(BootstrapFieldsMixin, forms.Form):
     amount = forms.IntegerField(label='Summa', min_value=1)
-    due_date = forms.DateField(label='Muddat', widget=forms.DateInput(attrs={'type': 'date'}))
+    due_date = forms.DateField(label='Muddat', widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
 
 
 ScheduleFormSet = formset_factory(ScheduleItemForm, extra=3, can_delete=True)

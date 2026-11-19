@@ -43,4 +43,4 @@ class AuditLog(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.created_at:%Y-%m-%d %H:%M} {self.action} {self.entity_type}:{self.entity_id}'
+        return f'{self.created_at:%d.%m.%Y %H:%M} {self.action} {self.entity_type}:{self.entity_id}'

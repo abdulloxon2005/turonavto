@@ -5,6 +5,7 @@ from django.views.generic import ListView
 
 from apps.accounts.models import User
 from apps.accounts.services import set_active
+from apps.core.filters import int_param
 from apps.core.mixins import AdminRequiredMixin
 from apps.core.models import AuditLog
 from apps.core.services import log_action
@@ -47,8 +48,8 @@ class AccessControlView(AdminRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = AuditLog.objects.filter(action__in=['auth.login', 'auth.logout']).select_related('user')
-        user_id = self.request.GET.get('user')
-        if user_id:
+        user_id = int_param(self.request, 'user')
+        if user_id is not None:
             qs = qs.filter(user_id=user_id)
         return qs
 

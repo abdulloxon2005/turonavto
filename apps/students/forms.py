@@ -16,7 +16,7 @@ class StudentForm(forms.ModelForm):
         model = Student
         fields = ['full_name', 'phone', 'phone2', 'birth_date', 'address', 'photo', 'note']
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'birth_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'note': forms.Textarea(attrs={'rows': 3}),
         }
 

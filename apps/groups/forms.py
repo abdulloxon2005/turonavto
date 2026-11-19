@@ -8,8 +8,8 @@ class GroupForm(forms.ModelForm):
         model = Group
         fields = ['name', 'category', 'start_date', 'end_date', 'price', 'max_students', 'schedule']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):

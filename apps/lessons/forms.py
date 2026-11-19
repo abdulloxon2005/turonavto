@@ -5,7 +5,7 @@ from apps.students.models import Student
 
 class LessonForm(forms.Form):
     student = forms.ModelChoiceField(queryset=Student.objects.none(), label="O'quvchi")
-    lesson_date = forms.DateField(label='Sana', widget=forms.DateInput(attrs={'type': 'date'}))
+    lesson_date = forms.DateField(label='Sana', widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
     start_time = forms.TimeField(label='Vaqt', widget=forms.TimeInput(attrs={'type': 'time'}))
     hours = forms.DecimalField(label='Soat', max_digits=4, decimal_places=1, min_value=0.5, initial=1)
 
@@ -21,7 +21,7 @@ class TheoryLessonForm(forms.Form):
     group = forms.ModelChoiceField(queryset=None, label='Guruh')
     teacher = forms.ModelChoiceField(queryset=None, label="O'qituvchi")
     topic = forms.CharField(label='Mavzu', required=False, max_length=255)
-    lesson_date = forms.DateField(label='Sana', widget=forms.DateInput(attrs={'type': 'date'}))
+    lesson_date = forms.DateField(label='Sana', widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}))
     start_time = forms.TimeField(label='Vaqt', widget=forms.TimeInput(attrs={'type': 'time'}))
     hours = forms.DecimalField(label='Soat', max_digits=4, decimal_places=1, min_value=0.5, initial=2)
 

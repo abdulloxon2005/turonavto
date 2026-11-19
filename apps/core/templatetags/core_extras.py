@@ -1,3 +1,5 @@
+import re
+
 from django import template
 
 register = template.Library()
@@ -67,3 +69,22 @@ def status_badge(value):
 @register.filter
 def status_label(value):
     return STATUS_LABELS.get(value, value)
+
+
+@register.simple_tag(takes_context=True)
+def page_url(context, page_number):
+    """Joriy GET filtrlarini saqlagan holda ?page=N havolasini qaytaradi."""
+    params = context['request'].GET.copy()
+    params['page'] = page_number
+    return '?' + params.urlencode()
+
+
+_ISO_DATE = re.compile(r'(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)')
+
+
+@register.filter
+def pretty_dates(value):
+    """Matn ichidagi YYYY-MM-DD sanalarni kun.oy.yil ko'rinishiga o'giradi (jurnal, xabarnomalar uchun)."""
+    if value is None:
+        return value
+    return _ISO_DATE.sub(r'\3.\2.\1', str(value))

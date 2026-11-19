@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.views import View
 
 from apps.accounts.models import User
+from apps.core.filters import int_param
 from apps.core.mixins import AdminRequiredMixin
 from apps.groups.models import Group
 from apps.payments.models import Payment
@@ -30,6 +31,10 @@ def _parse_date(value, default):
         return datetime.date.fromisoformat(value)
     except ValueError:
         return default
+
+
+def _id_str(value):
+    return str(value) if value is not None else None
 
 
 def _fmt_date(value):
@@ -69,9 +74,12 @@ class RevenueReportView(AdminRequiredMixin, View):
         date_from = _parse_date(request.GET.get('date_from'), today.replace(day=1))
         date_to = _parse_date(request.GET.get('date_to'), today)
         method = request.GET.get('method') or None
-        received_by = request.GET.get('received_by') or None
+        received_by_id = int_param(request, 'received_by')
+        received_by = _id_str(received_by_id)
+        if method not in Payment.Method.values:
+            method = None
 
-        data = revenue_report(date_from, date_to, method=method, received_by=received_by)
+        data = revenue_report(date_from, date_to, method=method, received_by=received_by_id)
 
         fmt = request.GET.get('format')
         if fmt:
@@ -99,9 +107,10 @@ class GroupsReportView(AdminRequiredMixin, View):
     template_name = 'reports/groups.html'
 
     def get(self, request):
-        group_id = request.GET.get('group') or None
+        gid = int_param(request, 'group')
+        group_id = _id_str(gid)
         status = request.GET.get('status') or None
-        rows = groups_report(group_id=group_id, status=status)
+        rows = groups_report(group_id=gid, status=status)
 
         fmt = request.GET.get('format')
         if fmt:
@@ -148,12 +157,12 @@ class DebtorsReportView(AdminRequiredMixin, View):
     template_name = 'reports/debtors.html'
 
     def get(self, request):
-        group_id = request.GET.get('group') or None
-        owner_id = request.GET.get('owner') or None
-        min_days = request.GET.get('min_days')
-        min_days = int(min_days) if min_days else None
+        gid = int_param(request, 'group')
+        oid = int_param(request, 'owner')
+        group_id, owner_id = _id_str(gid), _id_str(oid)
+        min_days = int_param(request, 'min_days', minimum=0, maximum=100000)
 
-        rows = debtors_report(group_id=group_id, owner_id=owner_id, min_overdue_days=min_days)
+        rows = debtors_report(group_id=gid, owner_id=oid, min_overdue_days=min_days)
 
         fmt = request.GET.get('format')
         if fmt:
@@ -178,7 +187,9 @@ class UpcomingRevenueReportView(AdminRequiredMixin, View):
     template_name = 'reports/upcoming.html'
 
     def get(self, request):
-        days = int(request.GET.get('days') or 30)
+        days = int_param(request, 'days', minimum=0, maximum=3650)
+        if days is None:
+            days = 30
         data = upcoming_revenue_report(days=days)
 
         fmt = request.GET.get('format')

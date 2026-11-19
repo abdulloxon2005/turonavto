@@ -4,13 +4,22 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0">Qarzdorlar</h4>
-  <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" role="switch" id="include-partial"
-           {% if include_partial %}checked{% endif %}
-           onchange="window.location.search = this.checked ? '?include_partial=1' : ''">
+</div>
+<form method="get" class="row g-2 mb-3 align-items-center" data-live-filter>
+  <div class="col-auto"><input type="search" name="q" class="form-control" placeholder="O'quvchi ismi..." value="{{ request.GET.q }}" autocomplete="off"></div>
+  <div class="col-auto">
+    <select name="group" class="form-select">
+      <option value="">Barcha guruhlar</option>
+      {% for g in group_options %}<option value="{{ g.pk }}" {% if request.GET.group == g.pk|stringformat:'s' %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto form-check form-switch ms-2">
+    <input class="form-check-input" type="checkbox" role="switch" id="include-partial" name="include_partial" value="1" {% if include_partial %}checked{% endif %}>
     <label class="form-check-label" for="include-partial">Qisman to'langanlarni ham ko'rsatish</label>
   </div>
-</div>
+</form>
+<div id="live-results">
+<div class="text-muted small mb-2">Jami: <strong>{{ debtors|length }}</strong> ta · Umumiy qarz: <strong>{{ total_debt|money }}</strong></div>
 <table class="table bg-white">
   <thead><tr><th>O'quvchi</th><th>Guruh</th><th>Qarz</th><th>Holat</th><th>Keyingi muddat</th></tr></thead>
   <tbody>
@@ -27,4 +36,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

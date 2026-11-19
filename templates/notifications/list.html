@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load core_extras %}
 {% block title %}Xabarnomalar{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -9,14 +10,26 @@
   </form>
 </div>
 
+<form method="get" class="row g-2 mb-3" data-live-filter>
+  <div class="col-auto"><input type="search" name="q" class="form-control" placeholder="Qidirish..." value="{{ request.GET.q }}" autocomplete="off"></div>
+  <div class="col-auto">
+    <select name="status" class="form-select">
+      <option value="">Barchasi</option>
+      <option value="unread" {% if request.GET.status == 'unread' %}selected{% endif %}>O'qilmagan</option>
+      <option value="read" {% if request.GET.status == 'read' %}selected{% endif %}>O'qilgan</option>
+    </select>
+  </div>
+</form>
+
+<div id="live-results">
 <div class="list-group">
   {% for n in notifications %}
   <div class="list-group-item {% if not n.is_read %}list-group-item-light border-start border-primary border-3{% endif %}">
     <div class="d-flex justify-content-between">
-      <strong>{{ n.title }}</strong>
+      <strong>{{ n.title|pretty_dates }}</strong>
       <small class="text-muted">{{ n.created_at }}</small>
     </div>
-    <p class="mb-1 small">{{ n.body }}</p>
+    <p class="mb-1 small">{{ n.body|pretty_dates }}</p>
     {% if not n.is_read %}
     <form method="post" action="{% url 'notifications:mark_read' n.pk %}">
       {% csrf_token %}
@@ -27,5 +40,7 @@
   {% empty %}
   <p class="text-muted">Xabarnomalar yo'q</p>
   {% endfor %}
+</div>
+{% include 'partials/pagination.html' %}
 </div>
 {% endblock %}

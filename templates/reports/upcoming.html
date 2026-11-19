@@ -4,14 +4,16 @@
 {% block content %}
 <h4 class="mb-3">Kutilayotgan tushum</h4>
 
-<form method="get" class="row g-2 mb-3 align-items-end">
+<form method="get" class="row g-2 mb-3 align-items-end" data-live-filter>
   <div class="col-auto"><label class="form-label small mb-0">Necha kun</label><input type="number" name="days" class="form-control" value="{{ days }}"></div>
-  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
-  <div class="col-auto">
-    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
-    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
-  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary live-submit">Filtr</button></div>
 </form>
+
+<div id="live-results">
+<div class="mb-3">
+  <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}format=xlsx">Excel</a>
+  <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}format=pdf" target="_blank">PDF</a>
+</div>
 
 <div class="card card-body mb-3"><small class="text-muted">Jami kutilayotgan</small><strong class="fs-4">{{ data.total|money }}</strong></div>
 
@@ -30,4 +32,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

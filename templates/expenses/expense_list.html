@@ -7,7 +7,7 @@
   <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm">+ Xarajat qo'shish</a>
 </div>
 
-<form method="get" class="row g-2 mb-3 align-items-end">
+<form method="get" class="row g-2 mb-3 align-items-end" data-live-filter>
   <div class="col-auto">
     <label class="form-label small mb-0">Turi</label>
     {{ filter_form.category }}
@@ -24,9 +24,11 @@
     <label class="form-label small mb-0">Sanagacha</label>
     {{ filter_form.date_to }}
   </div>
-  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary live-submit">Filtr</button></div>
+  <div class="col-auto"><a href="{% url 'expenses:list' %}" class="btn btn-link text-secondary" data-live-clear>Tozalash</a></div>
 </form>
 
+<div id="live-results">
 <div class="card card-body mb-3">
   <small class="text-muted">Jami xarajat</small>
   <strong class="fs-4 text-danger">{{ total|money }}</strong>
@@ -50,13 +52,6 @@
   </tbody>
 </table>
 
-{% if is_paginated %}
-<nav>
-  <ul class="pagination">
-    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
-    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+{% include 'partials/pagination.html' %}
+</div>
 {% endblock %}

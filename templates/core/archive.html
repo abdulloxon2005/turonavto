@@ -5,6 +5,12 @@
 <h4 class="mb-3">Arxiv</h4>
 <p class="text-muted">Arxivlangan o'quvchilar, guruhlar va bloklangan xodimlar shu yerda to'plangan.</p>
 
+<form method="get" class="row g-2 mb-3" data-live-filter>
+  <div class="col-auto"><input type="search" name="q" class="form-control" style="min-width:280px" placeholder="Ism, telefon yoki guruh nomi..." value="{{ request.GET.q }}" autocomplete="off"></div>
+  <div class="col-auto"><a href="{% url 'core:archive' %}" class="btn btn-link text-secondary" data-live-clear>Tozalash</a></div>
+</form>
+
+<div id="live-results">
 <div class="card mb-4">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span><i class="bi bi-person-badge"></i> Arxivlangan o'quvchilar</span>
@@ -99,5 +105,6 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
 </div>
 {% endblock %}

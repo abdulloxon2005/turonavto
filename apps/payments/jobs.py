@@ -31,7 +31,7 @@ def mark_overdue_schedules():
             owner,
             type='overdue',
             title="To'lov muddati o'tdi",
-            body=f'{student.full_name} — {item.amount - item.paid_amount} so\'m, muddat: {item.due_date}',
+            body=f'{student.full_name} — {item.amount - item.paid_amount} so\'m, muddat: {item.due_date:%d.%m.%Y}',
             link=f'/oquvchilar/{student.pk}/',
         )
         from apps.accounts.models import User
@@ -67,7 +67,7 @@ def remind_upcoming_due(days_before=3):
             owner,
             type='due_soon',
             title="To'lov muddati yaqinlashmoqda",
-            body=f'{student.full_name} — {item.amount - item.paid_amount} so\'m, muddat: {item.due_date}',
+            body=f'{student.full_name} — {item.amount - item.paid_amount} so\'m, muddat: {item.due_date:%d.%m.%Y}',
             link=f'/oquvchilar/{student.pk}/',
         )
         count += 1

@@ -4,7 +4,7 @@
 {% block content %}
 <h4 class="mb-3">Hodimlar bo'yicha hisobot</h4>
 
-<form method="get" class="row g-2 mb-3 align-items-end">
+<form method="get" class="row g-2 mb-3 align-items-end" data-live-filter>
   <div class="col-auto"><label class="form-label small mb-0">Dan</label><input type="date" name="date_from" class="form-control" value="{{ date_from|date:'Y-m-d' }}"></div>
   <div class="col-auto"><label class="form-label small mb-0">Gacha</label><input type="date" name="date_to" class="form-control" value="{{ date_to|date:'Y-m-d' }}"></div>
   <div class="col-auto">
@@ -15,12 +15,14 @@
       <option value="instructor" {% if role == 'instructor' %}selected{% endif %}>Instruktor</option>
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-secondary">Filtr</button></div>
-  <div class="col-auto">
-    <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&format=xlsx">Excel</a>
-    <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}&format=pdf" target="_blank">PDF</a>
-  </div>
+  <div class="col-auto"><button class="btn btn-outline-secondary live-submit">Filtr</button></div>
 </form>
+
+<div id="live-results">
+<div class="mb-3">
+  <a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}format=xlsx">Excel</a>
+  <a class="btn btn-outline-danger" href="?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}format=pdf" target="_blank">PDF</a>
+</div>
 
 <table class="table bg-white">
   <thead><tr><th>Hodim</th><th>Rol</th><th>O'quvchilar</th><th>Undirgan</th><th>Qarz</th></tr></thead>
@@ -38,4 +40,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, TemplateView
 
+from .filters import date_param, int_param
 from .mixins import AdminRequiredMixin
 from .models import AuditLog
 
@@ -80,7 +81,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         revenue_by_month.reverse()
         expense_by_month = expense_monthly_totals(months=6)
 
-        month_labels = [d.strftime('%Y-%m') for d, _ in revenue_by_month]
+        month_labels = [d.strftime('%m.%Y') for d, _ in revenue_by_month]
         revenue_values = [amount for _, amount in revenue_by_month]
         expense_values = [amount for _, amount in expense_by_month]
 
@@ -200,13 +201,19 @@ class AuditLogListView(AdminRequiredMixin, ListView):
         qs = AuditLog.objects.select_related('user')
         action = self.request.GET.get('action')
         entity_type = self.request.GET.get('entity_type')
-        user_id = self.request.GET.get('user')
+        user_id = int_param(self.request, 'user')
         if action:
             qs = qs.filter(action=action)
         if entity_type:
             qs = qs.filter(entity_type=entity_type)
-        if user_id:
+        if user_id is not None:
             qs = qs.filter(user_id=user_id)
+        date_from = date_param(self.request, 'date_from')
+        date_to = date_param(self.request, 'date_to')
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -259,16 +266,23 @@ class ArchiveView(AdminRequiredMixin, TemplateView):
         from apps.groups.models import Group
         from apps.students.models import Student
 
+        from django.db.models import Q
+
         context = super().get_context_data(**kwargs)
-        context['archived_students'] = Student.objects.filter(
+        students = Student.objects.filter(
             status=Student.Status.ARCHIVED
         ).select_related('brought_by_user_id').order_by('full_name')
-        context['archived_groups'] = Group.objects.filter(
-            status=Group.Status.ARCHIVED
-        ).order_by('-start_date', 'name')
-        context['blocked_staff'] = User.objects.exclude(
-            role=User.Role.ADMIN
-        ).filter(is_active=False).order_by('full_name')
+        groups = Group.objects.filter(status=Group.Status.ARCHIVED).order_by('-start_date', 'name')
+        staff = User.objects.exclude(role=User.Role.ADMIN).filter(is_active=False).order_by('full_name')
+
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            students = students.filter(Q(full_name__icontains=q) | Q(phone__icontains=q))
+            groups = groups.filter(Q(name__icontains=q) | Q(category__icontains=q))
+            staff = staff.filter(Q(full_name__icontains=q) | Q(phone__icontains=q))
+        context['archived_students'] = students
+        context['archived_groups'] = groups
+        context['blocked_staff'] = staff
         return context
 
 

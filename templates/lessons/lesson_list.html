@@ -6,6 +6,28 @@
   <a href="{% url 'lessons:create' %}" class="btn btn-primary btn-sm">+ Dars qo'shish</a>
 </div>
 
+<form method="get" class="row g-2 mb-3" data-live-filter>
+  <div class="col-auto"><input type="search" name="q" class="form-control" placeholder="O'quvchi ismi..." value="{{ request.GET.q }}" autocomplete="off"></div>
+  <div class="col-auto">
+    <select name="instructor" class="form-select">
+      <option value="">Barcha instruktorlar</option>
+      {% for i in instructor_options %}<option value="{{ i.pk }}" {% if request.GET.instructor == i.pk|stringformat:'s' %}selected{% endif %}>{{ i.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="attended" class="form-select">
+      <option value="">Qatnashish: barchasi</option>
+      <option value="yes" {% if request.GET.attended == 'yes' %}selected{% endif %}>Qatnashdi</option>
+      <option value="no" {% if request.GET.attended == 'no' %}selected{% endif %}>Qatnashmadi</option>
+      <option value="unknown" {% if request.GET.attended == 'unknown' %}selected{% endif %}>Belgilanmagan</option>
+    </select>
+  </div>
+  <div class="col-auto"><input type="date" name="date_from" class="form-control" title="Sanadan" value="{{ request.GET.date_from }}"></div>
+  <div class="col-auto"><input type="date" name="date_to" class="form-control" title="Sanagacha" value="{{ request.GET.date_to }}"></div>
+  <div class="col-auto"><a href="{% url 'lessons:list' %}" class="btn btn-link text-secondary" data-live-clear>Tozalash</a></div>
+</form>
+
+<div id="live-results">
 <table class="table bg-white">
   <thead><tr><th>Sana</th><th>Vaqt</th><th>O'quvchi</th><th>Instruktor</th><th>Soat</th><th>Qatnashdi</th></tr></thead>
   <tbody>
@@ -31,13 +53,6 @@
   </tbody>
 </table>
 
-{% if is_paginated %}
-<nav>
-  <ul class="pagination">
-    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Oldingi</a></li>{% endif %}
-    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Keyingi</a></li>{% endif %}
-  </ul>
-</nav>
-{% endif %}
+{% include 'partials/pagination.html' %}
+</div>
 {% endblock %}

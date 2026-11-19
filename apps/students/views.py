@@ -6,6 +6,7 @@ from django.views import View
 from django.views.generic import ListView
 
 from apps.accounts.models import User
+from apps.core.filters import int_param
 from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin, StaffRequiredMixin
 
 from .forms import DeleteRequestDecisionForm, DeleteRequestForm, StudentForm, StudentWordImportForm
@@ -59,11 +60,11 @@ class StudentListView(AnyRoleRequiredMixin, ListView):
                 | qs.filter(phone__icontains=q)
                 | qs.filter(passport_no__icontains=q)
             ).distinct()
-        group_id = self.request.GET.get('group')
-        if group_id:
+        group_id = int_param(self.request, 'group')
+        if group_id is not None:
             qs = qs.filter(group_memberships__group_id=group_id, group_memberships__left_at__isnull=True)
-        owner_id = self.request.GET.get('owner')
-        if owner_id:
+        owner_id = int_param(self.request, 'owner')
+        if owner_id is not None:
             qs = qs.filter(brought_by_user_id_id=owner_id)
         status = self.request.GET.get('status', Student.Status.ACTIVE)
         if status:
@@ -134,8 +135,8 @@ class MyBroughtStudentsView(AnyRoleRequiredMixin, View):
                 | qs.filter(phone__icontains=q)
                 | qs.filter(passport_no__icontains=q)
             ).distinct()
-        group_id = request.GET.get('group', '').strip()
-        if group_id:
+        group_id = int_param(request, 'group')
+        if group_id is not None:
             qs = qs.filter(group_memberships__group_id=group_id)
 
         all_brought = list(Student.objects.filter(brought_by_user_id=request.user))

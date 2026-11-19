@@ -6,6 +6,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
 from apps.accounts.models import User
+from apps.core.filters import int_param
 from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin
 
 from .forms import GroupForm
@@ -43,8 +44,8 @@ class GroupListView(AnyRoleRequiredMixin, ListView):
         status = self.request.GET.get('status', '')
         if status:
             qs = qs.filter(status=status)
-        teacher_id = self.request.GET.get('teacher', '').strip()
-        if teacher_id:
+        teacher_id = int_param(self.request, 'teacher')
+        if teacher_id is not None:
             qs = qs.filter(group_teachers__user_id=teacher_id).distinct()
         return qs
 
@@ -234,7 +235,7 @@ class GroupStudentSearchView(AdminOrTeacherRequiredMixin, View):
             group_memberships__group=group, group_memberships__left_at__isnull=True
         )
         if q:
-            results = (results.filter(full_name__icontains=q) | results.filter(phone__icontains=q)).distinct()
+            results = results.filter(full_name__icontains=q)
         results = results[:15]
         return render(request, 'groups/_student_search_results.html', {'group': group, 'results': results})
 

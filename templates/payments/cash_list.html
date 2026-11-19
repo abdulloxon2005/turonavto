@@ -11,6 +11,29 @@
   {% endif %}
 </div>
 
+<form method="get" class="row g-2 mb-3 align-items-center" data-live-filter>
+  <div class="col-auto">
+    <select name="user" class="form-select">
+      <option value="">Barcha hodimlar</option>
+      {% for u in user_options %}<option value="{{ u.pk }}" {% if request.GET.user == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <select name="status" class="form-select">
+      <option value="">Barcha holatlar</option>
+      {% for val, label in status_choices %}<option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-auto"><input type="date" name="date_from" class="form-control" title="Sanadan" value="{{ request.GET.date_from }}"></div>
+  <div class="col-auto"><input type="date" name="date_to" class="form-control" title="Sanagacha" value="{{ request.GET.date_to }}"></div>
+  <div class="col-auto form-check ms-2">
+    <input class="form-check-input" type="checkbox" id="only-diff" name="diff" value="1" {% if request.GET.diff == '1' %}checked{% endif %}>
+    <label class="form-check-label" for="only-diff">Faqat farqi borlar</label>
+  </div>
+  <div class="col-auto"><a href="{% url 'payments:cash_list' %}" class="btn btn-link text-secondary" data-live-clear>Tozalash</a></div>
+</form>
+
+<div id="live-results">
 <table class="table bg-white">
   <thead><tr><th>Sana</th><th>Hodim</th><th>Tizim hisobi</th><th>E'lon qilingan</th><th>Farq</th><th>Holat</th></tr></thead>
   <tbody>
@@ -28,4 +51,5 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

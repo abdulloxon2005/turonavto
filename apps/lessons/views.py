@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import ListView
 
 from apps.accounts.models import User
+from apps.core.filters import date_param, int_param
 from apps.core.mixins import AdminRequiredMixin
 from apps.groups.services import visible_groups_queryset
 from apps.students.services import visible_students_queryset
@@ -21,6 +23,16 @@ from .services import (
 )
 
 
+def _filter_by_date(qs, request, field):
+    date_from = date_param(request, 'date_from')
+    date_to = date_param(request, 'date_to')
+    if date_from:
+        qs = qs.filter(**{f'{field}__gte': date_from})
+    if date_to:
+        qs = qs.filter(**{f'{field}__lte': date_to})
+    return qs
+
+
 class LessonListView(AdminRequiredMixin, ListView):
     model = Lesson
     template_name = 'lessons/lesson_list.html'
@@ -29,10 +41,28 @@ class LessonListView(AdminRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = visible_lessons_queryset(self.request.user).select_related('student', 'instructor')
-        student_id = self.request.GET.get('student')
-        if student_id:
+        student_id = int_param(self.request, 'student')
+        if student_id is not None:
             qs = qs.filter(student_id=student_id)
-        return qs
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(student__full_name__icontains=q)
+        instructor_id = int_param(self.request, 'instructor')
+        if instructor_id is not None:
+            qs = qs.filter(instructor_id=instructor_id)
+        attended = self.request.GET.get('attended', '')
+        if attended == 'yes':
+            qs = qs.filter(attended=True)
+        elif attended == 'no':
+            qs = qs.filter(attended=False)
+        elif attended == 'unknown':
+            qs = qs.filter(attended__isnull=True)
+        return _filter_by_date(qs, self.request, 'lesson_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['instructor_options'] = User.objects.filter(role=User.Role.INSTRUCTOR).order_by('full_name')
+        return context
 
 
 class LessonCreateView(AdminRequiredMixin, View):
@@ -76,10 +106,13 @@ class TheoryLessonListView(AdminRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = visible_theory_lessons_queryset(self.request.user).select_related('group', 'teacher')
-        group_id = self.request.GET.get('group')
-        if group_id:
+        group_id = int_param(self.request, 'group')
+        if group_id is not None:
             qs = qs.filter(group_id=group_id)
-        return qs
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(Q(topic__icontains=q) | Q(teacher__full_name__icontains=q) | Q(group__name__icontains=q))
+        return _filter_by_date(qs, self.request, 'lesson_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

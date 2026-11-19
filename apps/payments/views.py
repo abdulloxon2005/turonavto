@@ -1,14 +1,19 @@
+import datetime
 import uuid
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError
+from django.db.models import F
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
 
+from apps.accounts.models import User
+from apps.core.filters import date_param, int_param
 from apps.core.mixins import AdminOrTeacherRequiredMixin, AdminRequiredMixin, AnyRoleRequiredMixin
+from apps.groups.services import visible_groups_queryset
 from apps.students.services import visible_students_queryset
 
 from .forms import (
@@ -289,17 +294,49 @@ class DebtorsListView(AdminOrTeacherRequiredMixin, View):
         if not include_partial:
             debtors = [d for d in debtors if d['status'] != PaymentSchedule.Status.PARTIAL]
 
-        return render(request, self.template_name, {'debtors': debtors, 'include_partial': include_partial})
+        group_options = visible_groups_queryset(request.user)
+        group_id = int_param(request, 'group')
+        if group_id is not None:
+            debtors = [d for d in debtors if d['enrollment'].group_id == group_id]
+        q = request.GET.get('q', '').strip().lower()
+        if q:
+            debtors = [d for d in debtors if q in d['enrollment'].student.full_name.lower()]
+
+        return render(request, self.template_name, {
+            'debtors': debtors,
+            'include_partial': include_partial,
+            'group_options': group_options,
+            'total_debt': sum(d['debt'] for d in debtors),
+        })
 
 
 class CashClosingListView(AdminRequiredMixin, View):
     template_name = 'payments/cash_list.html'
 
     def get(self, request):
-        closings = visible_cash_closings_queryset(request.user).select_related('user')
-        today_closed = closings.filter(user=request.user, date=timezone.localdate()).exists()
+        all_closings = visible_cash_closings_queryset(request.user).select_related('user')
+        today_closed = all_closings.filter(user=request.user, date=timezone.localdate()).exists()
+
+        closings = all_closings
+        user_id = int_param(request, 'user')
+        if user_id is not None:
+            closings = closings.filter(user_id=user_id)
+        status = request.GET.get('status', '').strip()
+        if status in CashClosing.Status.values:
+            closings = closings.filter(status=status)
+        date_from = date_param(request, 'date_from')
+        date_to = date_param(request, 'date_to')
+        if date_from:
+            closings = closings.filter(date__gte=date_from)
+        if date_to:
+            closings = closings.filter(date__lte=date_to)
+        if request.GET.get('diff') == '1':
+            closings = closings.exclude(declared_amount=F('expected_amount'))
+
         return render(request, self.template_name, {
             'closings': closings,
+            'user_options': User.objects.filter(cash_closings__isnull=False).distinct() if request.user.is_admin() else [],
+            'status_choices': CashClosing.Status.choices,
             'today_closed': today_closed,
             'today_expected': compute_expected_amount(request.user, timezone.localdate()),
         })

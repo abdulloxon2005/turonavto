@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import ListView
@@ -14,7 +15,16 @@ class NotificationListView(AdminOrTeacherRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user)
+        qs = Notification.objects.filter(user=self.request.user)
+        status = self.request.GET.get('status', '')
+        if status == 'unread':
+            qs = qs.filter(is_read=False)
+        elif status == 'read':
+            qs = qs.filter(is_read=True)
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(Q(title__icontains=q) | Q(body__icontains=q))
+        return qs
 
 
 class NotificationMarkReadView(AdminOrTeacherRequiredMixin, View):
