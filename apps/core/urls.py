@@ -6,6 +6,7 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.DashboardView.as_view(), name='dashboard'),
+    path('faollik/', views.KeepAliveView.as_view(), name='keepalive'),
     path('jurnal/', views.AuditLogListView.as_view(), name='audit_log'),
     path('zaxira/', views.BackupListView.as_view(), name='backup_list'),
     path('zaxira/<str:filename>/', views.BackupDownloadView.as_view(), name='backup_download'),

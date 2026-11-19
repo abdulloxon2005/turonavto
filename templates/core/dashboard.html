@@ -16,37 +16,14 @@
   <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Instruktorlar</small><strong class="fs-5">{{ admin_stats.instructors_count }}</strong></div></div>
   <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Ochiq guruhlar</small><strong class="fs-5">{{ admin_stats.open_groups_count }}</strong></div></div>
   <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi tushum</small><strong class="fs-5 text-success">{{ admin_stats.month_revenue|money }}</strong></div></div>
-  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi xarajat</small><strong class="fs-5 text-danger">{{ admin_stats.month_expenses|money }}</strong></div></div>
-  <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Bu oydagi foyda</small><strong class="fs-5 {% if admin_stats.month_profit < 0 %}text-danger{% else %}text-success{% endif %}">{{ admin_stats.month_profit|money }}</strong></div></div>
   <div class="col-6 col-md-3"><div class="card card-body"><small class="text-muted">Jami qarzdorlik</small><strong class="fs-5 text-danger">{{ admin_stats.total_debt|money }}</strong></div></div>
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-lg-8">
+  <div class="col-md-6 col-lg-4">
     <div class="card card-body h-100">
-      <small class="text-muted mb-2">Tushum va xarajat (oxirgi 6 oy)</small>
-      <canvas id="revenueExpenseChart" height="220"></canvas>
-    </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card card-body h-100">
-      <small class="text-muted mb-2">To'langan / Qarzdorlik</small>
+      <small class="text-muted mb-2">To'langan / To'lanmagan</small>
       <canvas id="debtChart" height="220"></canvas>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-lg-6">
-    <div class="card card-body h-100">
-      <small class="text-muted mb-2">Eng ko'p undirgan xodimlar (jami)</small>
-      <canvas id="staffChart" height="220"></canvas>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card card-body h-100">
-      <small class="text-muted mb-2">Bu oy xarajatlar turi bo'yicha</small>
-      <canvas id="expenseCategoryChart" height="220"></canvas>
     </div>
   </div>
 </div>
@@ -209,67 +186,15 @@
 <script>
 (function () {
   const data = JSON.parse(document.getElementById('dashboard-chart-data').textContent);
-  const palette = {
-    revenue: '#2563eb',
-    expense: '#ef4444',
-    paid: '#22c55e',
-    debt: '#f97316',
-    bars: ['#2563eb', '#22c55e', '#f97316', '#a855f7', '#0ea5e9'],
-  };
-
-  new Chart(document.getElementById('revenueExpenseChart'), {
-    type: 'bar',
-    data: {
-      labels: data.monthLabels,
-      datasets: [
-        { label: "Tushum", data: data.revenueValues, backgroundColor: palette.revenue, borderRadius: 4 },
-        { label: "Xarajat", data: data.expenseValues, backgroundColor: palette.expense, borderRadius: 4 },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'bottom' } },
-      scales: { y: { beginAtZero: true } },
-    },
-  });
 
   new Chart(document.getElementById('debtChart'), {
     type: 'doughnut',
     data: {
-      labels: ["To'langan", 'Qarzdorlik'],
-      datasets: [{ data: [data.debtPaid, data.debtRemaining], backgroundColor: [palette.paid, palette.debt] }],
+      labels: ["To'langan", "To'lanmagan"],
+      datasets: [{ data: [data.debtPaid, data.debtRemaining], backgroundColor: ['#22c55e', '#9ca3af'] }],
     },
     options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
   });
-
-  new Chart(document.getElementById('staffChart'), {
-    type: 'bar',
-    data: {
-      labels: data.staffLabels,
-      datasets: [{ label: 'Undirgan summa', data: data.staffValues, backgroundColor: palette.bars, borderRadius: 4 }],
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } },
-    },
-  });
-
-  if (data.expenseCategoryLabels.length) {
-    new Chart(document.getElementById('expenseCategoryChart'), {
-      type: 'pie',
-      data: {
-        labels: data.expenseCategoryLabels,
-        datasets: [{ data: data.expenseCategoryValues, backgroundColor: palette.bars }],
-      },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } },
-    });
-  } else {
-    document.getElementById('expenseCategoryChart').replaceWith(
-      Object.assign(document.createElement('p'), { className: 'text-muted small mb-0', textContent: "Bu oy xarajat kiritilmagan" })
-    );
-  }
 })();
 </script>
 {% endif %}

@@ -11,7 +11,7 @@ def site_context(request):
         # Migratsiya hali qo'llanilmagan bo'lishi mumkin (masalan birinchi ishga tushirishda).
         center_name = settings.CENTER_NAME
 
-    context = {'CENTER_NAME': center_name}
+    context = {'CENTER_NAME': center_name, 'IDLE_TIMEOUT_SECONDS': settings.SESSION_IDLE_TIMEOUT_SECONDS}
     user = getattr(request, 'user', None)
     if user is not None and user.is_authenticated:
         from apps.notifications.models import Notification

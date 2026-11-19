@@ -61,6 +61,7 @@ MIDDLEWARE = [
     'django_htmx.middleware.HtmxMiddleware',
     'apps.core.middleware.CurrentUserMiddleware',
     'apps.core.middleware.BlockedUserMiddleware',
+    'apps.core.middleware.HtmxLoginRedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -176,6 +177,11 @@ BACKUP_KEEP_COUNT = 30
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security
+# Faolsizlik bo'yicha avtomatik chiqish: so'nggi so'rovdan keyin shuncha soniya o'tsa sessiya tugaydi
+# va qayta login so'raladi. SESSION_SAVE_EVERY_REQUEST har so'rovda muddatni yangilaydi (sliding).
+SESSION_IDLE_TIMEOUT_SECONDS = config('SESSION_IDLE_TIMEOUT_SECONDS', default=30 * 60, cast=int)
+SESSION_COOKIE_AGE = SESSION_IDLE_TIMEOUT_SECONDS
+SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'Lax'

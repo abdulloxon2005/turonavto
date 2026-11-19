@@ -20,6 +20,8 @@ class LoginView(View):
     def get(self, request):
         if request.user.is_authenticated:
             return redirect('core:dashboard')
+        if request.GET.get('expired'):
+            messages.info(request, "Uzoq vaqt faol bo'lmaganingiz sababli tizimdan chiqarildingiz. Qayta kiring.")
         return render(request, self.template_name, {'form': LoginForm()})
 
     def post(self, request):

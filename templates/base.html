@@ -172,6 +172,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/uz_latn.js"></script>
+{% if user.is_authenticated %}<div id="idle-config" hidden data-timeout="{{ IDLE_TIMEOUT_SECONDS }}" data-login-url="{% url 'accounts:login' %}" data-logout-url="{% url 'accounts:logout' %}" data-ping-url="{% url 'core:keepalive' %}"></div>
+<script src="{% static 'js/idle.js' %}"></script>{% endif %}
 <script src="{% static 'js/dates.js' %}"></script>
 <script src="{% static 'js/live.js' %}"></script>
 {% block extra_scripts %}{% endblock %}

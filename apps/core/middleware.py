@@ -44,3 +44,24 @@ class BlockedUserMiddleware:
             logout(request)
             return redirect('accounts:login')
         return self.get_response(request)
+
+
+class HtmxLoginRedirectMiddleware:
+    """Sessiya tugagan bo'lsa HTMX so'rovi login sahifasini bo'lak ichiga joylab yubormasin,
+    butun sahifa login'ga o'tsin (HX-Redirect)."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.headers.get('HX-Request') == 'true' and response.status_code == 302:
+            from django.http import HttpResponse
+            from django.urls import reverse
+
+            location = response.get('Location', '')
+            if location.startswith(reverse('accounts:login')):
+                redirect_response = HttpResponse(status=204)
+                redirect_response['HX-Redirect'] = location
+                return redirect_response
+        return response

@@ -34,11 +34,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def _admin_stats(self):
         from apps.accounts.models import User
-        from apps.expenses.services import by_category_totals, monthly_totals as expense_monthly_totals
         from apps.groups.models import Group
         from apps.payments.models import Enrollment, Payment
         from apps.payments.services import debtors_queryset
-        from apps.reports.services import staff_report
         from apps.students.models import Student
 
         today = timezone.localdate()
@@ -57,50 +55,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         total_debt = sum(d['debt'] for d in debtors_queryset(self.request.user))
         total_due_all = Enrollment.objects.aggregate(s=Sum('total_due'))['s'] or 0
 
-        month_expenses = sum(
-            total for _, total in expense_monthly_totals(months=1)
-        )
-
-        # Oxirgi 6 oy: tushum va xarajat
-        revenue_by_month = []
-        month_cursor_year, month_cursor_month = today.year, today.month
-        for _ in range(6):
-            start = datetime.date(month_cursor_year, month_cursor_month, 1)
-            if month_cursor_month == 12:
-                end = datetime.date(month_cursor_year + 1, 1, 1)
-            else:
-                end = datetime.date(month_cursor_year, month_cursor_month + 1, 1)
-            amount = confirmed_payments.filter(
-                paid_at__date__gte=start, paid_at__date__lt=end
-            ).aggregate(s=Sum('amount'))['s'] or 0
-            revenue_by_month.append((start, amount))
-            month_cursor_month -= 1
-            if month_cursor_month == 0:
-                month_cursor_month = 12
-                month_cursor_year -= 1
-        revenue_by_month.reverse()
-        expense_by_month = expense_monthly_totals(months=6)
-
-        month_labels = [d.strftime('%m.%Y') for d, _ in revenue_by_month]
-        revenue_values = [amount for _, amount in revenue_by_month]
-        expense_values = [amount for _, amount in expense_by_month]
-
-        top_staff = sorted(staff_report(), key=lambda r: r['collected'], reverse=True)[:5]
-        staff_labels = [row['user'].full_name for row in top_staff]
-        staff_values = [row['collected'] for row in top_staff]
-
-        expense_categories = by_category_totals(date_from=month_start)
-
         chart_data = {
-            'monthLabels': month_labels,
-            'revenueValues': revenue_values,
-            'expenseValues': expense_values,
             'debtPaid': max(total_due_all - total_debt, 0),
             'debtRemaining': total_debt,
-            'staffLabels': staff_labels,
-            'staffValues': staff_values,
-            'expenseCategoryLabels': [label for label, _ in expense_categories],
-            'expenseCategoryValues': [amount for _, amount in expense_categories],
         }
 
         return {
@@ -112,8 +69,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'month_revenue': month_revenue,
                 'total_collected_all_time': total_collected_all_time,
                 'total_debt': total_debt,
-                'month_expenses': month_expenses,
-                'month_profit': month_revenue - month_expenses,
             },
             'chart_data': chart_data,
         }
@@ -189,6 +144,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             'debtors_count': debtors_count,
             'month_hours': month_hours,
         }
+
+
+class KeepAliveView(View):
+    """Faol foydalanuvchining sessiyasini yangilaydi (SESSION_SAVE_EVERY_REQUEST). Sessiya tugagan bo'lsa 401."""
+
+    def get(self, request):
+        from django.http import HttpResponse
+
+        if not request.user.is_authenticated:
+            return HttpResponse(status=401)
+        return HttpResponse(status=204)
 
 
 class AuditLogListView(AdminRequiredMixin, ListView):
