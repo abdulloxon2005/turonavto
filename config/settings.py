@@ -132,9 +132,6 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
-# Login rate limiting (5 ta noto'g'ri urinishdan keyin 15 daqiqa bloklash)
-LOGIN_MAX_ATTEMPTS = 5
-LOGIN_LOCKOUT_MINUTES = 15
 
 
 # Internationalization

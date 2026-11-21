@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import authenticate
 from django.urls import reverse
 
-from apps.accounts.models import LoginAttempt, User
+from apps.accounts.models import User
 
 
 @pytest.mark.django_db
@@ -19,24 +19,12 @@ def test_login_wrong_password_does_not_authenticate(teacher_user):
 
 
 @pytest.mark.django_db
-def test_login_lockout_after_5_failed_attempts(teacher_user):
-    for _ in range(5):
+def test_no_lockout_after_many_failed_attempts(teacher_user):
+    for _ in range(15):
         authenticate(phone=teacher_user.phone, password='wrong-password')
 
-    attempt = LoginAttempt.objects.get(phone=teacher_user.phone)
-    assert attempt.is_locked() is True
-
-    # Hatto to'g'ri parol bilan ham bloklangan paytda kira olmaydi
     user = authenticate(phone=teacher_user.phone, password='pass12345')
-    assert user is None
-
-
-@pytest.mark.django_db
-def test_successful_login_resets_failed_counter(teacher_user):
-    authenticate(phone=teacher_user.phone, password='wrong-password')
-    authenticate(phone=teacher_user.phone, password='pass12345')
-    attempt = LoginAttempt.objects.get(phone=teacher_user.phone)
-    assert attempt.failed_count == 0
+    assert user is not None
 
 
 @pytest.mark.django_db

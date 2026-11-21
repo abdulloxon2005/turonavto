@@ -153,7 +153,7 @@ sertifikat qo'shilganda:
 | Talab | Holat |
 |---|---|
 | Parollar argon2 bilan xeshlanadi, kamida 8 belgi | ✅ |
-| 5 xato urinishdan keyin 15 daqiqa blok | ✅ (`apps/accounts/backends.py`) |
+| 5 xato urinishdan keyin 15 daqiqa blok | ❌ (olib tashlangan) (`apps/accounts/backends.py`) |
 | Faqat HTTPS (production) | ⚠️ Tayyor, lekin o'chirilgan — domen+TLS sertifikat sozlanmaguncha `ENABLE_SSL=False`; sozlangach `.env`da `ENABLE_SSL=True` qiling, shunda `SECURE_SSL_REDIRECT`/xavfsiz cookie/HSTS yoqiladi |
 | Rol (Guard) va egalik tekshiruvi har bir view'da | ✅ (`apps/core/mixins.py` + har app'ning `services.py`) |
 | Ruxsatsiz yozuvga 404 | ✅ |

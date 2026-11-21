@@ -10,7 +10,7 @@ from apps.core.mixins import AdminRequiredMixin
 from apps.core.services import log_action
 
 from .forms import ChangePasswordForm, ForcedPasswordChangeForm, LoginForm, StaffForm
-from .models import LoginAttempt, User
+from .models import User
 from .services import create_staff, reset_password, set_active, update_staff
 
 
@@ -32,26 +32,9 @@ class LoginView(View):
         phone = form.cleaned_data['phone'].strip()
         password = form.cleaned_data['password']
 
-        attempt = LoginAttempt.objects.filter(phone=phone).first()
-        if attempt and attempt.is_locked():
-            minutes = max(1, attempt.seconds_remaining() // 60 + 1)
-            messages.error(
-                request,
-                f"Juda ko'p noto'g'ri urinish. {minutes} daqiqadan keyin qayta urinib ko'ring.",
-            )
-            return render(request, self.template_name, {'form': form})
-
         user = authenticate(request, phone=phone, password=password)
         if user is None:
-            attempt = LoginAttempt.objects.filter(phone=phone).first()
-            if attempt and attempt.is_locked():
-                minutes = max(1, attempt.seconds_remaining() // 60 + 1)
-                messages.error(
-                    request,
-                    f"Juda ko'p noto'g'ri urinish. {minutes} daqiqadan keyin qayta urinib ko'ring.",
-                )
-            else:
-                messages.error(request, "Telefon raqami yoki parol noto'g'ri")
+            messages.error(request, "Telefon raqami yoki parol noto'g'ri")
             return render(request, self.template_name, {'form': form})
 
         if not user.is_active:
